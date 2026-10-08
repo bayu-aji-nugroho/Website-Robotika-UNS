@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-space-grotesk: var(--font-space-grotesk), sans-serif;
+  --font-jakarta: var(--font-jakarta-sans), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* New Color Palette: Red, White, Sand Beige, Sienna Brown, Dark Maroon */
+    --color-palette-red: #B22234;
+    --color-palette-white: #FFFFFF;
+    --color-palette-beige: #D9C6B2;
+    --color-palette-sienna: #A0522D;
+    --color-palette-maroon: #8B0000;
+
+    /* Functional Design Tokens */
+    --color-primary: #B22234;
+    --color-primary-dark: #8B0000;
+    --color-accent: #A0522D;
+    --color-bg-light: #FDFBF7;
+    --color-bg-subtle: #F4ECE1;
+    --color-text-main: #2D0A0E;
+    --color-text-muted: #6E584D;
+    --color-border-light: #E5D8CC;
+
+    --font-space-grotesk: var(--font-space-grotesk), sans-serif;
+    --font-jakarta: var(--font-jakarta-sans), sans-serif;
+    --font-inter: var(--font-inter), sans-serif;
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-main);
+  font-family: var(--font-inter);
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility with warm beige border & soft shadow */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(217, 198, 178, 0.6);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #E5D8CC;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(139, 0, 0, 0.08);
+  border-color: #B22234;
+}
+
+/* Warm grid pattern background */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(160, 82, 45, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(160, 82, 45, 0.05) 1px, transparent 1px);
 }
