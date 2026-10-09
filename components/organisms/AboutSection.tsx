@@ -67,7 +67,7 @@ export const AboutSection: React.FC = () => {
                   30+
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold text-[#18181b]">Anggota aktif</h4>
-                <p className="text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Mahasiswa terdaftar bersama UKM.</p>
+                <p className="hidden sm:block text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Mahasiswa terdaftar bersama UKM.</p>
               </div>
 
               {/* Stat 2 */}
@@ -76,7 +76,7 @@ export const AboutSection: React.FC = () => {
                   5+
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold text-[#18181b]">Robot dikembangkan</h4>
-                <p className="text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Prototipe riset & kompetisi.</p>
+                <p className="hidden sm:block text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Prototipe riset & kompetisi.</p>
               </div>
 
               {/* Stat 3 */}
@@ -85,7 +85,7 @@ export const AboutSection: React.FC = () => {
                   2
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold text-[#18181b]">Tim robotika</h4>
-                <p className="text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Tim aktif dalam organisasi.</p>
+                <p className="hidden sm:block text-[10px] sm:text-xs text-[#71717a] leading-tight sm:leading-normal">Tim aktif dalam organisasi.</p>
               </div>
             </div>
           </div>

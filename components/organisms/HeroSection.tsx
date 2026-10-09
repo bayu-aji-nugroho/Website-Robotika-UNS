@@ -61,9 +61,9 @@ export const HeroSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Header Image */}
-          <div className="hidden lg:block lg:col-span-6">
-            <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-white flex items-center justify-center group ">
+          {/* Image: Displayed below 'Daftar Sekarang' on mobile, and on right column on desktop */}
+          <div className="block lg:col-span-6 w-full pt-1 sm:pt-4 lg:pt-0">
+            <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] rounded-lg overflow-hidden bg-[#f4f4f5] border border-[#e4e4e7] flex items-center justify-center group shadow-xs">
               <Image
                 src="https://lh3.googleusercontent.com/d/1d5OfoyB7kNo5F8ybHxzZ7WxOVKNqEpEY"
                 alt="Robotika Universitas Sebelas Maret"

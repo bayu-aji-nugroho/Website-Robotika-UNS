@@ -1,8 +1,9 @@
 import React from "react";
+import Link from "next/link";
 
 export const NavBrand: React.FC = () => {
   return (
-    <a href="#" className="flex items-center gap-3.5 group">
+    <Link href="/" className="flex items-center gap-3.5 group">
       <div className="flex flex-col">
         <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-base tracking-wider text-[#18181b] uppercase leading-none">
           ROBOTIKA
@@ -19,6 +20,6 @@ export const NavBrand: React.FC = () => {
         alt="Logo UNS"
         className="h-9 w-auto object-contain"
       />
-    </a>
+    </Link>
   );
 };

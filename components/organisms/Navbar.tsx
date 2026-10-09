@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Container } from "../atoms";
 import { NavBrand, NavLinks } from "../molecules";
 import { Menu, X } from "lucide-react";
@@ -30,12 +31,12 @@ export const Navbar: React.FC = () => {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
             <NavLinks />
-            <a
-              href="#kontak"
+            <Link
+              href="/#kontak"
               className="px-4 py-1.5 text-xs font-semibold text-[#18181b] border border-[#e4e4e7] rounded-md hover:bg-[#f4f4f5] transition-colors"
             >
               Masuk
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -56,13 +57,13 @@ export const Navbar: React.FC = () => {
               onItemClick={() => setMobileMenuOpen(false)}
             />
             <div className="pt-3 border-t border-[#e4e4e7]">
-              <a
-                href="#kontak"
+              <Link
+                href="/#kontak"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block text-center py-2 text-xs font-semibold text-[#18181b] border border-[#e4e4e7] rounded-md hover:bg-[#f4f4f5]"
               >
                 Masuk
-              </a>
+              </Link>
             </div>
           </div>
         )}
