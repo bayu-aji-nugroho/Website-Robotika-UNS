@@ -2,8 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Navbar, ContactFooter } from "@/components/organisms";
-import { Container } from "@/components/atoms";
+import { Navbar, ContactFooter } from "@/src/components/organisms";
+import { Container } from "@/src/components/atoms";
 import {
   allDivisions,
   getDivisionById,
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${item.name} | Robotika Universitas Sebelas Maret`,
-    description: item.desc,
+    description: item.tagline,
   };
 }
 
@@ -91,46 +91,45 @@ export default async function DivisionDetailPage({ params }: PageProps) {
   const otherItems = allDivisions.filter((d) => d.id !== item.id).slice(0, 4);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f7fafd] text-[#102e4a]">
+    <div className="min-h-screen flex flex-col bg-[#f7fafd] dark:bg-[#0c0d0e] text-[#102e4a] dark:text-[#f4f4f5] transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 pt-24 sm:pt-28 pb-16 sm:pb-24">
         <Container size="lg">
-          {/* Breadcrumbs & Back Link */}
           <div className="mb-6 sm:mb-8 flex items-center justify-between">
             <Link
               href="/#divisi-tim"
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#71717a] hover:text-[#B22234] transition-colors group"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-[#71717a] dark:text-zinc-400 hover:text-[#B22234] dark:hover:text-red-400 transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              <span>Kembali ke Divisi & Tim</span>
+              <span>Kembali ke Divisi dan Tim</span>
             </Link>
 
-            <span className="text-[11px] font-mono text-[#a1a1aa] uppercase tracking-wider hidden sm:inline-block">
+            <span className="text-[11px] font-mono text-[#a1a1aa] dark:text-zinc-500 uppercase tracking-wider hidden sm:inline-block">
               ROBOTIKA UNS · {item.type.toUpperCase()}
             </span>
           </div>
 
           {/* Hero Banner Header */}
-          <div className="bg-white rounded-2xl p-6 sm:p-10 border border-[#e4e4e7] shadow-xs mb-8 sm:mb-12">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-[#f4f4f5]">
+          <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 sm:p-10 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs mb-8 sm:mb-12">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-[#f4f4f5] dark:border-zinc-800">
               <div className="flex items-center gap-4 sm:gap-5">
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-[#FCF2F3] border border-[#F8D7DA] flex items-center justify-center shrink-0">
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-[#FCF2F3] dark:bg-red-950/40 border border-[#F8D7DA] dark:border-red-900/50 flex items-center justify-center shrink-0">
                   {getIconForDivision(item.id)}
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-[#B22234] bg-[#FCF2F3] px-2.5 py-1 rounded-md uppercase font-semibold border border-[#F8D7DA]">
+                    <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-[#B22234] dark:text-red-400 bg-[#FCF2F3] dark:bg-red-950/40 px-2.5 py-1 rounded-md uppercase font-semibold border border-[#F8D7DA] dark:border-red-900/50">
                       {item.category}
                     </span>
                     {item.badge && (
-                      <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-[#71717a] bg-[#f4f4f5] px-2.5 py-1 rounded-md uppercase font-semibold border border-[#e4e4e7]">
+                      <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-[#71717a] dark:text-zinc-300 bg-[#f4f4f5] dark:bg-zinc-800 px-2.5 py-1 rounded-md uppercase font-semibold border border-[#e4e4e7] dark:border-zinc-700">
                         {item.badge}
                       </span>
                     )}
                   </div>
-                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[#18181b] tracking-tight font-['Plus_Jakarta_Sans',sans-serif]">
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight font-['League_Spartan',sans-serif]">
                     {item.name}
                   </h1>
                 </div>
@@ -147,7 +146,7 @@ export default async function DivisionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <p className="text-sm sm:text-lg font-medium text-[#18181b] mt-6 max-w-3xl leading-relaxed">
+            <p className="text-sm sm:text-lg font-medium text-[#18181b] dark:text-zinc-200 mt-6 max-w-3xl leading-relaxed">
               {item.tagline}
             </p>
           </div>
@@ -157,24 +156,23 @@ export default async function DivisionDetailPage({ params }: PageProps) {
             {/* Left Content (8 Cols) */}
             <div className="lg:col-span-8 space-y-8 sm:space-y-10">
               {/* Sekilas Divisi / Tim */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-[#f4f4f5] pb-3">
+              <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
                   <span className="h-2 w-2 rounded-full bg-[#B22234]" />
-                  <h2 className="text-base sm:text-lg font-bold text-[#18181b]">
+                  <h2 className="text-base sm:text-lg font-bold text-[#18181b] dark:text-zinc-100">
                     Tentang {item.name}
                   </h2>
                 </div>
-                <p className="text-xs sm:text-sm text-[#52525b] leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#52525b] dark:text-zinc-300 leading-relaxed">
                   {item.fullDesc}
                 </p>
               </div>
 
-              {/* Tanggung Jawab & Lingkup Kerja */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-[#f4f4f5] pb-3">
+              <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
                   <span className="h-2 w-2 rounded-full bg-[#B22234]" />
-                  <h2 className="text-base sm:text-lg font-bold text-[#18181b]">
-                    Peran & Tanggung Jawab Utama
+                  <h2 className="text-base sm:text-lg font-bold text-[#18181b] dark:text-zinc-100">
+                    Peran dan Tanggung Jawab Utama
                   </h2>
                 </div>
 
@@ -182,10 +180,10 @@ export default async function DivisionDetailPage({ params }: PageProps) {
                   {item.responsibilities.map((resp, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-3 p-3.5 rounded-xl bg-[#fafafa] border border-[#f4f4f5]"
+                      className="flex items-start gap-3 p-3.5 rounded-xl bg-[#fafafa] dark:bg-zinc-900/70 border border-[#f4f4f5] dark:border-zinc-800"
                     >
                       <CheckCircle2 className="w-4 h-4 text-[#B22234] shrink-0 mt-0.5" />
-                      <p className="text-xs sm:text-sm text-[#3f3f46] leading-relaxed">
+                      <p className="text-xs sm:text-sm text-[#3f3f46] dark:text-zinc-300 leading-relaxed">
                         {resp}
                       </p>
                     </div>
@@ -195,11 +193,11 @@ export default async function DivisionDetailPage({ params }: PageProps) {
 
               {/* Proyek / Inisiatif (jika ada) */}
               {item.projects && item.projects.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] shadow-xs space-y-4">
-                  <div className="flex items-center gap-2 border-b border-[#f4f4f5] pb-3">
+                <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 sm:p-8 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-4">
+                  <div className="flex items-center gap-2 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
                     <Sparkles className="h-4 w-4 text-[#B22234]" />
-                    <h2 className="text-base sm:text-lg font-bold text-[#18181b]">
-                      Proyek & Misi Unggulan
+                    <h2 className="text-base sm:text-lg font-bold text-[#18181b] dark:text-zinc-100">
+                      Proyek dan Misi Unggulan
                     </h2>
                   </div>
 
@@ -207,12 +205,12 @@ export default async function DivisionDetailPage({ params }: PageProps) {
                     {item.projects.map((proj, idx) => (
                       <div
                         key={idx}
-                        className="p-4 rounded-xl border border-[#e4e4e7] bg-[#FCF2F3]/40 space-y-1.5"
+                        className="p-4 rounded-xl border border-[#e4e4e7] dark:border-zinc-800 bg-[#FCF2F3]/40 dark:bg-red-950/20 space-y-1.5"
                       >
                         <span className="text-[10px] font-mono text-[#B22234] uppercase font-bold">
                           PROYEK 0{idx + 1}
                         </span>
-                        <h3 className="text-xs sm:text-sm font-bold text-[#18181b]">
+                        <h3 className="text-xs sm:text-sm font-bold text-[#18181b] dark:text-zinc-100">
                           {proj}
                         </h3>
                       </div>
@@ -224,16 +222,15 @@ export default async function DivisionDetailPage({ params }: PageProps) {
 
             {/* Right Sidebar (4 Cols) */}
             <div className="lg:col-span-4 space-y-6 sm:space-y-8">
-              {/* Skills & Tools Card */}
-              <div className="bg-white rounded-2xl p-6 border border-[#e4e4e7] shadow-xs space-y-4">
-                <h3 className="text-sm font-bold text-[#18181b] border-b border-[#f4f4f5] pb-3">
-                  Teknologi & Keahlian Terkait
+              <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-4">
+                <h3 className="text-sm font-bold text-[#18181b] dark:text-zinc-100 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
+                  Teknologi dan Keahlian Terkait
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {item.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="text-xs font-semibold text-[#B22234] bg-[#FCF2F3] border border-[#F8D7DA] px-2.5 py-1 rounded-lg"
+                      className="text-xs font-semibold text-[#B22234] dark:text-red-300 bg-[#FCF2F3] dark:bg-red-950/40 border border-[#F8D7DA] dark:border-red-900/50 px-2.5 py-1 rounded-lg"
                     >
                       {skill}
                     </span>
@@ -242,15 +239,15 @@ export default async function DivisionDetailPage({ params }: PageProps) {
               </div>
 
               {/* Tags Card */}
-              <div className="bg-white rounded-2xl p-6 border border-[#e4e4e7] shadow-xs space-y-3">
-                <h3 className="text-sm font-bold text-[#18181b] border-b border-[#f4f4f5] pb-3">
-                  Kategori & Kata Kunci
+              <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-3">
+                <h3 className="text-sm font-bold text-[#18181b] dark:text-zinc-100 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
+                  Kategori dan Kata Kunci
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {item.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[11px] text-[#71717a] bg-[#f4f4f5] border border-[#e4e4e7] px-2 py-0.5 rounded-md"
+                      className="text-[11px] text-[#71717a] dark:text-zinc-400 bg-[#f4f4f5] dark:bg-zinc-800 border border-[#e4e4e7] dark:border-zinc-700 px-2 py-0.5 rounded-md"
                     >
                       #{tag}
                     </span>
@@ -259,8 +256,8 @@ export default async function DivisionDetailPage({ params }: PageProps) {
               </div>
 
               {/* Exploration: Other Divisions */}
-              <div className="bg-white rounded-2xl p-6 border border-[#e4e4e7] shadow-xs space-y-4">
-                <h3 className="text-sm font-bold text-[#18181b] border-b border-[#f4f4f5] pb-3">
+              <div className="bg-white dark:bg-[#18191d] rounded-2xl p-6 border border-[#e4e4e7] dark:border-zinc-800 shadow-xs space-y-4">
+                <h3 className="text-sm font-bold text-[#18181b] dark:text-zinc-100 border-b border-[#f4f4f5] dark:border-zinc-800 pb-3">
                   Jelajahi Bagian Lain
                 </h3>
                 <div className="space-y-2.5">
@@ -268,36 +265,36 @@ export default async function DivisionDetailPage({ params }: PageProps) {
                     <Link
                       key={other.id}
                       href={`/divisi/${other.id}`}
-                      className="group flex items-center justify-between p-2.5 rounded-xl border border-[#f4f4f5] hover:border-[#B22234]/40 hover:bg-[#fafafa] transition-all"
+                      className="group flex items-center justify-between p-2.5 rounded-xl border border-[#f4f4f5] dark:border-zinc-800/80 hover:border-[#B22234]/40 dark:hover:border-red-900/60 hover:bg-[#fafafa] dark:hover:bg-zinc-900/70 transition-all"
                     >
                       <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-[#18181b] group-hover:text-[#B22234] transition-colors">
+                        <p className="text-xs font-bold text-[#18181b] dark:text-zinc-100 group-hover:text-[#B22234] dark:group-hover:text-red-400 transition-colors">
                           {other.name}
                         </p>
-                        <p className="text-[10px] text-[#71717a] font-mono uppercase">
+                        <p className="text-[10px] text-[#71717a] dark:text-zinc-400 font-mono uppercase">
                           {other.category}
                         </p>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#a1a1aa] group-hover:text-[#B22234] transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="w-3.5 h-3.5 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   ))}
                 </div>
               </div>
 
               {/* Call to action card */}
-              <div className="bg-gradient-to-br from-[#FCF2F3] to-[#FFF6F7] rounded-2xl p-6 border border-[#F8D7DA] space-y-3">
-                <h3 className="text-sm font-bold text-[#B22234]">
+              <div className="bg-gradient-to-br from-[#FCF2F3] to-[#FFF6F7] dark:from-red-950/40 dark:to-zinc-900/80 rounded-2xl p-6 border border-[#F8D7DA] dark:border-red-900/50 space-y-3">
+                <h3 className="text-sm font-bold text-[#B22234] dark:text-red-400">
                   Siap Berkontribusi?
                 </h3>
-                <p className="text-xs text-[#71717a] leading-relaxed">
+                <p className="text-xs text-[#71717a] dark:text-zinc-300 leading-relaxed">
                   Buka potensimu di bidang robotika dan bergabunglah bersama keluarga besar Robotika Universitas Sebelas Maret.
                 </p>
                 <div className="pt-2">
                   <Link
-                    href="/#kontak"
+                    href="/register"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-[#B22234] hover:bg-[#8B0000] text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs"
                   >
-                    <span>Hubungi Kami</span>
+                    <span>Daftar Sekarang</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -309,5 +306,6 @@ export default async function DivisionDetailPage({ params }: PageProps) {
 
       <ContactFooter />
     </div>
+
   );
 }

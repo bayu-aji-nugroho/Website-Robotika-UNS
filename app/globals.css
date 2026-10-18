@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
-  --font-space-grotesk: var(--font-space-grotesk), sans-serif;
-  --font-jakarta: var(--font-jakarta-sans), sans-serif;
-  --font-inter: var(--font-inter), sans-serif;
+  --font-sans: var(--font-league-spartan), sans-serif;
+  --font-league-spartan: var(--font-league-spartan), sans-serif;
+  --font-space-grotesk: var(--font-league-spartan), sans-serif;
+  --font-jakarta: var(--font-league-spartan), sans-serif;
+  --font-inter: var(--font-league-spartan), sans-serif;
 }
 
 @layer base {
@@ -25,9 +29,18 @@
     --color-text-muted: #6E584D;
     --color-border-light: #E5D8CC;
 
-    --font-space-grotesk: var(--font-space-grotesk), sans-serif;
-    --font-jakarta: var(--font-jakarta-sans), sans-serif;
-    --font-inter: var(--font-inter), sans-serif;
+    --font-league-spartan: var(--font-league-spartan), sans-serif;
+    --font-space-grotesk: var(--font-league-spartan), sans-serif;
+    --font-jakarta: var(--font-league-spartan), sans-serif;
+    --font-inter: var(--font-league-spartan), sans-serif;
+  }
+
+  .dark {
+    --color-bg-light: #090a0c;
+    --color-bg-subtle: #141518;
+    --color-text-main: #f4f4f5;
+    --color-text-muted: #a1a1aa;
+    --color-border-light: #27272a;
   }
 }
 
@@ -38,7 +51,7 @@ html {
 body {
   background-color: var(--color-bg-light);
   color: var(--color-text-main);
-  font-family: var(--font-inter);
+  font-family: var(--font-league-spartan), sans-serif;
   overflow-x: hidden;
 }
 
@@ -50,15 +63,30 @@ body {
   border: 1px solid rgba(217, 198, 178, 0.6);
 }
 
+.dark .glass-panel {
+  background: rgba(18, 19, 22, 0.85);
+  border: 1px solid rgba(63, 63, 70, 0.4);
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #E5D8CC;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.dark .glass-card {
+  background: rgba(24, 25, 29, 0.95);
+  border: 1px solid #27272a;
+}
+
 .glass-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px -6px rgba(139, 0, 0, 0.08);
+  border-color: #B22234;
+}
+
+.dark .glass-card:hover {
+  box-shadow: 0 12px 28px -6px rgba(178, 34, 52, 0.18);
   border-color: #B22234;
 }
 
@@ -68,4 +96,10 @@ body {
   background-image:
     linear-gradient(to right, rgba(160, 82, 45, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(160, 82, 45, 0.05) 1px, transparent 1px);
+}
+
+.dark .bg-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
