@@ -1,225 +1,170 @@
-# Spesifikasi Backend: Data Registrasi Calon Anggota Robotika UNS
+# Spesifikasi Backend: Data Registrasi Calon Anggota Robotika UNS (Edge Function & Zero Trust)
 
-Dokumentasi ini adalah spesifikasi teknis untuk implementasi endpoint API dan penyimpanan database pendaftaran calon anggota baru UKM Robotika UNS. Dokumen ini dirancang sebagai pegangan backend secara umum (agnostik terhadap bahasa pemrograman, framework, dan vendor database).
-
-Format dokumen cetak PDF tersedia di: `docs/DOKUMENTASI_BACKEND_REGISTRASI.pdf`.
+Dokumentasi ini adalah spesifikasi teknis implementasi backend Supabase Edge Function (`registration-step`) dan database PostgreSQL untuk pendaftaran calon anggota baru UKM Robotika UNS. Sistem dirancang dengan arsitektur **Zero Trust** dan penyimpanan bertahap (*multi-stage persistent draft*).
 
 ---
 
-## 1. Ruang Lingkup dan Batasan Sistem
+## 1. Arsitektur & Keamanan (Zero Trust)
 
-Dokumentasi ini hanya mencakup alur penerimaan data (intake form), yaitu:
-1. Menerima payload formulir pendaftaran dari frontend web.
-2. Memvalidasi integritas data identitas, pilihan divisi, dan berkas fisik CV di sisi server.
-3. Menyimpan berkas fisik CV ke storage (object storage atau server disk).
-4. Menyimpan data pendaftaran ke tabel database relasional.
-5. Mengembalikan status respons HTTP dan kode registrasi ke frontend.
-
-Proses di luar penerimaan formulir (seperti dashboard seleksi, penilaian wawancara, atau pengumuman) ditangani pada modul terpisah setelah data tersimpan.
-
----
-
-## 2. Alur Pengiriman Data (End-to-End Workflow)
-
-1. **Pengisian Form di Frontend**: Calon anggota menyetujui syarat seleksi, mengisi data diri (Nama, NIM, Program Studi, Angkatan, nomor WhatsApp), memilih 2 divisi beserta alasan, mengunggah berkas CV format PDF (maksimal 1.0 MB), dan menyetujui keabsahan berkas.
-2. **Validasi Awal di Klien**: Frontend memeriksa format dasar (ekstensi `.pdf`, batas ukuran 1 MB) dan men-generate kode registrasi sementara (`ROB-UNS-2026-XXXX`).
-3. **Pengiriman Request**: Frontend mengirim HTTP POST request ke backend. Metode default menggunakan `multipart/form-data` karena menyertakan berkas fisik.
-4. **Pemrosesan di Backend**:
-   - Backend memverifikasi seluruh field wajib.
-   - Backend memeriksa keunikan NIM (mencegah pendaftaran ganda).
-   - Backend memvalidasi berkas CV (tipe MIME `application/pdf`, magic bytes `%PDF-`, ukuran <= 1 MB).
-   - Backend menyimpan berkas CV ke storage dan membuat path referensi.
-   - Backend menyimpan record pendaftaran ke database.
-5. **Respons HTTP**: Backend mengembalikan status `201 Created`. Frontend menampilkan halaman tanda terima dan akses tautan grup WhatsApp.
+Sistem pendaftaran menerapkan prinsip **Zero Trust Architecture**:
+1. **Autentikasi Wajib**: Setiap request (kecuali preflight OPTIONS) memerlukan *Bearer JWT Token* pengguna yang didapat dari Supabase Auth (Google OAuth).
+2. **Server-Side Validation**: Seluruh data divalidasi dan disanitasi di sisi backend Edge Function sebelum menyentuh database.
+3. **Database Constraints (Defense in Depth)**: PostgreSQL menerapkan aturan keras:
+   - `chk_fullname_no_numbers`: Nama tidak boleh mengandung angka.
+   - `chk_angkatan_allowed`: Angkatan hanya diperbolehkan `2025` dan `2026`.
+   - `idx_registrations_nim`: NIM unik (tidak boleh dobel).
+4. **Row Level Security (RLS)**: Hanya pengguna pemilik data (`auth.uid() = user_id`) yang dapat membaca atau mengupdate draft pendaftarannya.
 
 ---
 
-## 3. Spesifikasi Endpoint API
+## 2. Spesifikasi Endpoint Supabase Edge Function
 
+- **Nama Function**: `registration-step`
 - **Method**: `POST`
-- **Path Rekomendasi**: `/api/v1/registrations`
 - **Headers**:
-  - `Accept: application/json`
-  - `Content-Type: multipart/form-data` (default saat unggah berkas fisik) atau `application/json` (jika berkas diunggah via storage presigned URL)
+  - `Authorization: Bearer <SUPABASE_JWT_TOKEN>`
+  - `apikey: <SUPABASE_ANON_KEY>`
+  - `Content-Type: application/json` (untuk action step 3, step 4, cek NIM, get progress)
+  - `Content-Type: multipart/form-data` (khusus action submit final berkas CV)
 
-### Daftar Field Multipart (`multipart/form-data`)
+### Action 1: `get_progress`
+Mengambil data pendaftaran akun pengguna saat ini untuk memulihkan form (*auto-restore*).
+- **Request Body**: `{ "action": "get_progress" }`
+- **Response**: `{ "success": true, "data": SupabaseRegistrationRecord | null }`
 
-| Field Key | Tipe Data | Status | Keterangan & Validasi | Contoh Nilai |
-| :--- | :--- | :--- | :--- | :--- |
-| `registration_code` | String | Wajib | Kode registrasi unik pendaftar. Maksimal 32 karakter. | `ROB-UNS-2026-1042` |
-| `full_name` | String | Wajib | Nama lengkap mahasiswa. Maksimal 255 karakter. | `Dimas Arya Prasetya` |
-| `nim` | String | Wajib | NIM huruf kapital, unik di database. Maksimal 30 karakter. | `I0724018` |
-| `prodi` | String | Wajib | Nama program studi. | `S1 Teknik Elektro` |
-| `angkatan` | String | Wajib | Tahun masuk kuliah (4 digit angka). | `2025` |
-| `whatsapp` | String | Wajib | Nomor telepon aktif tersanitasi (hanya angka, awalan `08`). | `081234567891` |
-| `primary_division_id` | String | Wajib | Identifier divisi pilihan pertama. | `werkudara-pemrograman` |
-| `primary_division_name` | String | Wajib | Nama divisi pilihan pertama. | `Werkudara - Pemrograman` |
-| `primary_division_category` | String | Wajib | Nilai enum: `teknis` atau `non-teknis`. | `teknis` |
-| `primary_reason` | Text | Wajib | Alasan memilih divisi pertama. | Alasan minat mikrokontroler... |
-| `secondary_division_id` | String | Wajib | Identifier divisi pilihan kedua (tidak boleh sama dengan pilihan 1). | `werkudara-elektronika` |
-| `secondary_division_name` | String | Wajib | Nama divisi pilihan kedua. | `Werkudara - Elektronika` |
-| `secondary_division_category` | String | Wajib | Nilai enum: `teknis` atau `non-teknis`. | `teknis` |
-| `secondary_reason` | Text | Wajib | Alasan memilih divisi kedua. | Alasan minat hardware PCB... |
-| `agreed_requirements` | Boolean / String | Wajib | Nilai `true` (persetujuan syarat umum). | `true` |
-| `agreed_truth` | Boolean / String | Wajib | Nilai `true` (pernyataan keabsahan dokumen). | `true` |
-| `submitted_at` | String | Opsional | Timestamp ISO 8601 saat form dikirim dari browser. | `2026-10-18T08:15:30.000Z` |
-| `payload_json` | String JSON | Opsional | Serialisasi payload terstruktur frontend untuk audit log. | `{"registrationCode":...}` |
-| `cv_file` | File Biner | Wajib | Berkas fisik PDF kurikulum vitae, maksimal 1.048.576 bytes. | `berkas_cv.pdf` |
+### Action 2: `check_nim`
+Memeriksa ketersediaan NIM secara real-time.
+- **Request Body**: `{ "action": "check_nim", "payload": { "nim": "I0724018" } }`
+- **Response Sukses (Tersedia)**: `{ "available": true, "message": "NIM I0724018 tersedia." }`
+- **Response Konflik (Dobel)**: Status `409 Conflict`, `{ "available": false, "error": "NIM I0724018 sudah digunakan oleh pendaftar lain." }`
 
----
-
-## 4. Format JSON Payload Alternatif
-
-Bila arsitektur backend menggunakan pemisahan upload (misal frontend mengunggah berkas langsung ke S3 presigned URL), endpoint dapat menerima payload format `application/json`:
-
-```json
-{
-  "registrationCode": "ROB-UNS-2026-1042",
-  "applicant": {
-    "fullName": "Dimas Arya Prasetya",
-    "nim": "I0724018",
-    "prodi": "S1 Teknik Elektro",
-    "angkatan": "2025",
-    "whatsapp": "081234567891"
-  },
-  "divisions": {
-    "primary": {
-      "id": "werkudara-pemrograman",
-      "name": "Werkudara - Pemrograman",
-      "category": "teknis",
-      "reason": "Memiliki dasar pemrograman C++ dan minat pada robot tanding KRAI."
-    },
-    "secondary": {
-      "id": "werkudara-elektronika",
-      "name": "Werkudara - Elektronika",
-      "category": "teknis",
-      "reason": "Tertarik mempelajari layout skematik PCB dan perancangan sirkuit daya."
+### Action 3: `save_step_3` (Simpan Permanen Identitas)
+Menyimpan data identitas mahasiswa ke tabel database dengan status `draft` dan `current_step = 3`.
+- **Request Body**:
+  ```json
+  {
+    "action": "save_step_3",
+    "payload": {
+      "fullName": "Dimas Arya Prasetya",
+      "nim": "I0724018",
+      "angkatan": "2025",
+      "prodi": "S1 Teknik Elektro",
+      "whatsapp": "081234567891"
     }
-  },
-  "cvFileMetadata": {
-    "fileName": "CV_Dimas_Arya_Prasetya.pdf",
-    "fileSizeBytes": 624500,
-    "fileSizeFormatted": "610 KB"
-  },
-  "consents": {
-    "agreedToRequirements": true,
-    "agreedToCvTruth": true
-  },
-  "metadata": {
-    "submittedAt": "2026-10-18T08:15:30.000Z",
-    "source": "web_registration_portal"
   }
-}
-```
+  ```
+- **Aturan Validasi & Penolakan Anomali**:
+  - `fullName`: Minimal 3 karakter. **Ditolak (422)** jika terdapat angka (`/\d/`) atau simbol ilegal (`<>;$%\`).
+  - `angkatan`: **Hanya** `"2025"` atau `"2026"`. **Ditolak (422)** jika angkatan 2023, 2024, dll.
+  - `nim`: Format UNS resmi diawali huruf fakultas valid (`F, G, H, I, D, E, B, K, M, V, L, Z, C, P`), panjang 7-12 karakter. **Ditolak (409)** jika NIM sudah digunakan oleh akun lain.
+  - `whatsapp`: Disanitasi (awalan `+628`/`628` -> `08`), panjang 10-15 digit angka.
+- **Response**: Status `200 OK`, `{ "success": true, "message": "Data identitas berhasil disimpan permanen.", "data": ... }`
+
+### Action 4: `save_step_4` (Simpan Permanen Pilihan Divisi)
+Memperbarui pilihan divisi dan alasan ke tabel database dengan `current_step = 4`.
+- **Request Body**:
+  ```json
+  {
+    "action": "save_step_4",
+    "payload": {
+      "primaryDivisionId": "werkudara-pemrograman",
+      "primaryDivisionName": "Werkudara - Pemrograman",
+      "primaryDivisionCategory": "teknis",
+      "primaryReason": "Memiliki dasar pemrograman C++...",
+      "secondaryDivisionId": "werkudara-elektronika",
+      "secondaryDivisionName": "Werkudara - Elektronika",
+      "secondaryDivisionCategory": "teknis",
+      "secondaryReason": "Tertarik mempelajari PCB layout..."
+    }
+  }
+  ```
+- **Aturan Validasi**:
+  - Divisi 1 dan Divisi 2 harus terdaftar di whitelist resmi UKM.
+  - Divisi 1 dan Divisi 2 **tidak boleh sama** (Ditolak 422 jika sama).
+  - Alasan minimal 15 karakter bermakna.
+
+### Action 5: `submit_final` (Upload CV & Finalisasi Pendaftaran)
+Menerima `multipart/form-data`, memverifikasi magic bytes PDF, mengunggah ke bucket storage `cv-uploads`, generate kode registrasi resmi, dan mengubah status menjadi `submitted`.
+- **Form Data Fields**:
+  - `action`: `"submit_final"`
+  - `cv_file`: File biner PDF (maksimal 1.0 MB / 1.048.576 bytes)
+  - `agreed_requirements`: `"true"`
+  - `agreed_truth`: `"true"`
+- **Response**: Status `201 Created`, `{ "success": true, "registrationCode": "ROB-UNS-2026-XXXX", "data": ... }`
 
 ---
 
-## 5. Aturan Validasi Sisi Backend
-
-1. **Pengecekan Duplikasi NIM**: Lakukan pengecekan sebelum simpan. Jika NIM sudah ada, kembalikan HTTP `409 Conflict`.
-2. **Pilihan Divisi**: Pastikan `primary_division_id` tidak identik dengan `secondary_division_id`.
-3. **Validasi Berkas CV**:
-   - Ukuran maksimum: `1.048.576 bytes` (1.0 MB).
-   - Tipe konten: `application/pdf`.
-   - Magic byte header file: Wajib diawali string `%PDF-` (hex `25 50 44 46`).
-4. **Sanitasi Nomor WhatsApp**: Hapus spasi dan tanda minus. Ganti awalan `+62` atau `62` menjadi `08`.
-5. **Persetujuan Wajib**: Pastikan `agreed_requirements` dan `agreed_truth` keduanya bernilai `true`.
-
----
-
-## 6. Desain Skema Database Relasional (SQL Standar)
-
-Skema tabel berikut menggunakan standar ANSI SQL dan dapat digunakan langsung pada PostgreSQL, MySQL, MariaDB, SQLite, atau Supabase:
+## 3. Desain Skema Database PostgreSQL Supabase
 
 ```sql
-CREATE TABLE registrations (
+CREATE TABLE public.registrations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  registration_code VARCHAR(32) NOT NULL UNIQUE,
-  full_name VARCHAR(255) NOT NULL,
-  nim VARCHAR(30) NOT NULL UNIQUE,
-  prodi VARCHAR(150) NOT NULL,
-  angkatan VARCHAR(10) NOT NULL,
-  whatsapp VARCHAR(30) NOT NULL,
+  user_id UUID NOT NULL,
+  user_email VARCHAR(255) NOT NULL,
+  registration_code VARCHAR(32) UNIQUE,
+  status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  current_step INT NOT NULL DEFAULT 3,
   
-  -- Pilihan Divisi Pertama
-  primary_division_id VARCHAR(100) NOT NULL,
-  primary_division_name VARCHAR(150) NOT NULL,
-  primary_division_category VARCHAR(20) NOT NULL,
-  primary_reason TEXT NOT NULL,
+  -- Identitas
+  full_name VARCHAR(255),
+  nim VARCHAR(30),
+  fakultas VARCHAR(100),
+  prodi VARCHAR(150),
+  angkatan VARCHAR(10),
+  whatsapp VARCHAR(30),
   
-  -- Pilihan Divisi Kedua
-  secondary_division_id VARCHAR(100) NOT NULL,
-  secondary_division_name VARCHAR(150) NOT NULL,
-  secondary_division_category VARCHAR(20) NOT NULL,
-  secondary_reason TEXT NOT NULL,
+  -- Pilihan Divisi
+  primary_division_id VARCHAR(100),
+  primary_division_name VARCHAR(150),
+  primary_division_category VARCHAR(20),
+  primary_reason TEXT,
+  secondary_division_id VARCHAR(100),
+  secondary_division_name VARCHAR(150),
+  secondary_division_category VARCHAR(20),
+  secondary_reason TEXT,
   
-  -- Metadata Berkas CV
-  cv_file_name VARCHAR(255) NOT NULL,
-  cv_file_size_bytes BIGINT NOT NULL,
-  cv_storage_path TEXT NULL,
-  cv_file_url TEXT NULL,
+  -- Berkas CV
+  cv_file_name VARCHAR(255),
+  cv_file_size_bytes BIGINT,
+  cv_storage_path TEXT,
+  cv_file_url TEXT,
+  agreed_requirements BOOLEAN DEFAULT FALSE,
+  agreed_truth BOOLEAN DEFAULT FALSE,
   
-  -- Persetujuan dan Timestamp
-  agreed_requirements BOOLEAN DEFAULT TRUE NOT NULL,
-  agreed_truth BOOLEAN DEFAULT TRUE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+  -- Timestamps
+  submitted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Indeks performa untuk pencarian identitas dan verifikasi
-CREATE UNIQUE INDEX idx_registrations_nim ON registrations(nim);
-CREATE UNIQUE INDEX idx_registrations_code ON registrations(registration_code);
-CREATE INDEX idx_registrations_created_at ON registrations(created_at);
+-- Hard Constraints
+ALTER TABLE public.registrations 
+  ADD CONSTRAINT chk_fullname_no_numbers CHECK (full_name IS NULL OR full_name !~ '[0-9]');
+
+ALTER TABLE public.registrations 
+  ADD CONSTRAINT chk_angkatan_allowed CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026'));
+
+-- Unique Indexes
+CREATE UNIQUE INDEX idx_registrations_user_id ON public.registrations(user_id);
+CREATE UNIQUE INDEX idx_registrations_nim ON public.registrations(UPPER(nim)) WHERE nim IS NOT NULL;
+CREATE INDEX idx_registrations_status ON public.registrations(status);
+
+-- RLS Policies
+ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "registrations_user_select" ON public.registrations FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "registrations_user_insert" ON public.registrations FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "registrations_user_update" ON public.registrations FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 ```
 
-> **Catatan Portabilitas**: Pada MySQL / MariaDB, ganti tipe data `UUID DEFAULT gen_random_uuid()` menjadi `VARCHAR(36)` atau `id BIGINT AUTO_INCREMENT PRIMARY KEY`, serta sesuaikan `TIMESTAMP WITH TIME ZONE` menjadi `DATETIME DEFAULT CURRENT_TIMESTAMP`.
-
 ---
 
-## 7. Manajemen Penyimpanan Berkas CV
+## 4. Format Respons Kesalahan (Error Payload)
 
-- **Pola Penamaan File**:
-  `cv-uploads/[angkatan]/[NIM]_[clean_filename].pdf`
-  Contoh: `cv-uploads/2025/I0724018_Dimas_Arya_Prasetya_CV.pdf`
-- **Tujuan Storage**:
-  - *Object Storage (S3 / MinIO / GCS / Supabase)*: Simpan path bucket di kolom `cv_storage_path` dan URL akses di `cv_file_url`.
-  - *Local Disk Server*: Simpan file di folder lokal server (misal `/var/storage/cv/...`) dan buat endpoint download atau dilayani lewat reverse proxy berizin.
-
----
-
-## 8. Kode Respons HTTP dan Skema Respons
-
-| Kode HTTP | Kondisi | Format Respons JSON |
+| Kasus | HTTP Status | Format JSON |
 | :--- | :--- | :--- |
-| **`201 Created`** | Berhasil memvalidasi dan menyimpan ke database. | `{"success": true, "message": "Pendaftaran berhasil disimpan", "registrationCode": "ROB-UNS-2026-1042"}` |
-| **`400 Bad Request`** | Data wajib belum lengkap atau berkas bukan PDF. | `{"success": false, "message": "Validasi gagal", "error": "Pilihan divisi pertama dan kedua tidak boleh sama"}` |
-| **`409 Conflict`** | NIM sudah pernah didaftarkan sebelumnya. | `{"success": false, "message": "Data sudah terdaftar", "error": "NIM I0724018 sudah pernah didaftarkan"}` |
-| **`413 Payload Too Large`** | Ukuran berkas CV melebihi batas 1.0 MB. | `{"success": false, "message": "Berkas terlalu besar", "error": "Ukuran berkas CV maksimal 1.0 MB"}` |
-| **`500 Internal Error`** | Kesalahan koneksi database atau kegagalan disk storage. | `{"success": false, "message": "Terjadi kesalahan internal server", "error": "Gagal menyimpan record"}` |
-
----
-
-## 9. Contoh Perintah Uji Endpoint (cURL)
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/registrations" \
-  -H "Accept: application/json" \
-  -F "registration_code=ROB-UNS-2026-1042" \
-  -F "full_name=Dimas Arya Prasetya" \
-  -F "nim=I0724018" \
-  -F "prodi=S1 Teknik Elektro" \
-  -F "angkatan=2025" \
-  -F "whatsapp=081234567891" \
-  -F "primary_division_id=werkudara-pemrograman" \
-  -F "primary_division_name=Werkudara - Pemrograman" \
-  -F "primary_division_category=teknis" \
-  -F "primary_reason=Memiliki dasar pemrograman C++ dan algoritma kontrol gerak robot." \
-  -F "secondary_division_id=werkudara-elektronika" \
-  -F "secondary_division_name=Werkudara - Elektronika" \
-  -F "secondary_division_category=teknis" \
-  -F "secondary_reason=Tertarik mendalami perancangan sirkuit daya dan layout PCB." \
-  -F "agreed_requirements=true" \
-  -F "agreed_truth=true" \
-  -F "submitted_at=2026-10-18T08:15:30.000Z" \
-  -F "cv_file=@/path/to/berkas_cv.pdf;type=application/pdf"
-```
+| **Nama Mengandung Angka** | `422 Unprocessable` | `{"success": false, "field": "fullName", "error": "Nama tidak valid: nama lengkap tidak boleh mengandung angka."}` |
+| **Angkatan Bukan 2025/2026** | `422 Unprocessable` | `{"success": false, "field": "angkatan", "error": "Pendaftaran hanya dibuka untuk mahasiswa angkatan 2025 dan 2026. Angkatan '2023' tidak memenuhi syarat."}` |
+| **NIM Duplikat** | `409 Conflict` | `{"success": false, "field": "nim", "error": "NIM I0724018 sudah digunakan oleh pendaftar lain. Silakan periksa kembali NIM Anda."}` |
+| **Format NIM Bukan Fakultas UNS** | `422 Unprocessable` | `{"success": false, "field": "nim", "error": "Format NIM tidak valid: inisial 'X' bukan kode fakultas resmi UNS (contoh valid: I0724018)."}` |
+| **Ukuran Berkas CV Melebihi 1 MB**| `413 Payload Too Large`| `{"success": false, "error": "Ukuran berkas CV melebihi batas 1.0 MB (terdeteksi: 1.45 MB)."}` |
+| **Token Tidak Ada / Kedaluwarsa** | `401 Unauthorized` | `{"success": false, "error": "Akses ditolak: Token autentikasi tidak ditemukan."}` |

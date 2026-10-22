@@ -6,6 +6,7 @@ fungsi [ Titik ekspor modul (barrel export) untuk seluruh komponen alur formulir
 */
 
 export * from "./RegistrationRequirementsSection";
+export * from "./RegistrationAuthSection";
 export * from "./RegistrationPersonalSection";
 export * from "./RegistrationDivisionSection";
 export * from "./RegistrationCvSection";

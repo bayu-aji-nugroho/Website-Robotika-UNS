@@ -23,6 +23,7 @@ export interface RegistrationStepperProps {
   maxReachableStep: number;
   onStepClick: (stepId: number) => void;
   className?: string;
+  isLocked?: boolean;
 }
 
 export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
@@ -31,6 +32,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
   maxReachableStep,
   onStepClick,
   className = "",
+  isLocked = false,
 }) => {
   const currentStepItem = steps.find((s) => s.id === currentStep) || steps[0];
 
@@ -51,14 +53,15 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
         </div>
 
         <div
-          className="grid grid-cols-5 gap-1.5"
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
           role="tablist"
           aria-label="Tahapan pendaftaran"
         >
           {steps.map((step) => {
             const isCompleted = step.id < currentStep;
             const isCurrent = step.id === currentStep;
-            const isAccessible = step.id <= maxReachableStep;
+            const isAccessible = !isLocked && step.id <= maxReachableStep;
 
             return (
               <button
@@ -102,7 +105,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
           {steps.map((step) => {
             const isCompleted = step.id < currentStep;
             const isCurrent = step.id === currentStep;
-            const isAccessible = step.id <= maxReachableStep;
+            const isAccessible = !isLocked && step.id <= maxReachableStep;
 
             return (
               <li

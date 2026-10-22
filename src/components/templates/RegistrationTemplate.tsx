@@ -1,12 +1,65 @@
+/*
+-----------------------------------------
+nama file: [ RegistrationTemplate.tsx ] 
+fungsi [ Komponen template halaman pendaftaran calon anggota baru dengan bilah navigasi atas terintegrasi profil pengguna dan wadah formulir. ]
+-----------------------------------------------
+*/
+
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { RegistrationForm } from "../organisms";
 import { Container, ThemeToggle } from "../atoms";
+import { NavUserMenu } from "../molecules";
+import {
+  GoogleAuthUser,
+  getAuthenticatedUser,
+  signOutUser,
+  supabase,
+  formatSupabaseUser,
+} from "@/src/services";
 
 export const RegistrationTemplate: React.FC = () => {
+  const [user, setUser] = useState<GoogleAuthUser | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getAuthenticatedUser().then((u) => {
+      if (isMounted) setUser(u);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      if (event === "SIGNED_OUT" || !session?.user) {
+        setUser(null);
+      } else {
+        setUser(formatSupabaseUser(session.user));
+      }
+    });
+
+    const handleSignoutEvent = () => {
+      if (isMounted) setUser(null);
+    };
+
+    window.addEventListener("supabase-auth-signout", handleSignoutEvent);
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+      window.removeEventListener("supabase-auth-signout", handleSignoutEvent);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await signOutUser();
+    setUser(null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F9F8] dark:bg-[#0c0d0e] text-[#18181b] dark:text-[#f4f4f5] print:bg-white print:min-h-0 transition-colors duration-200">
       <main className="flex-1 py-4 sm:py-8 lg:py-12 print:py-0">
@@ -20,9 +73,12 @@ export const RegistrationTemplate: React.FC = () => {
                 <ArrowLeft className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-colors" />
                 <span>Kembali ke Beranda</span>
               </Link>
-              <ThemeToggle />
-            </div>
 
+              <div className="flex items-center gap-2.5">
+                {user && <NavUserMenu user={user} onLogout={handleLogout} />}
+                <ThemeToggle />
+              </div>
+            </div>
 
             <h1 className="sr-only">Pendaftaran Calon Anggota Robotika UNS</h1>
 

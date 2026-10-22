@@ -1,5 +1,7 @@
 export type DivisionSelectionCategory = "teknis" | "non-teknis";
 
+export type RegistrationStatus = "draft" | "submitted";
+
 export interface RegistrationFormInput {
   fullName: string;
   nim: string;
@@ -15,6 +17,47 @@ export interface RegistrationFormInput {
   cvFile?: File | null;
   agreedToRequirements: boolean;
   agreedToCvTruth: boolean;
+}
+
+export interface Step3IdentityInput {
+  fullName: string;
+  nim: string;
+  angkatan: string;
+  prodi: string;
+  whatsapp: string;
+}
+
+export interface Step4DivisionInput {
+  categoryMode1: DivisionSelectionCategory;
+  primaryDivisionId: string;
+  primaryDivisionName?: string;
+  primaryDivisionCategory?: DivisionSelectionCategory;
+  primaryReason: string;
+  categoryMode2: DivisionSelectionCategory;
+  secondaryDivisionId: string;
+  secondaryDivisionName?: string;
+  secondaryDivisionCategory?: DivisionSelectionCategory;
+  secondaryReason: string;
+}
+
+export interface Step5SubmitInput {
+  cvFile: File;
+  agreedToRequirements: boolean;
+  agreedToCvTruth: boolean;
+}
+
+export interface SaveStepResult {
+  success: boolean;
+  message?: string;
+  field?: string;
+  error?: string;
+  data?: SupabaseRegistrationRecord;
+}
+
+export interface NimCheckResult {
+  available: boolean;
+  message?: string;
+  error?: string;
 }
 
 export interface RegistrationPayload {
@@ -58,35 +101,49 @@ export interface RegistrationPayload {
 
 export interface SupabaseRegistrationRecord {
   id?: string;
-  registration_code: string;
-  full_name: string;
-  nim: string;
-  prodi: string;
-  angkatan: string;
-  whatsapp: string;
-  primary_division_id: string;
-  primary_division_name: string;
-  primary_division_category: DivisionSelectionCategory;
-  primary_reason: string;
-  secondary_division_id: string;
-  secondary_division_name: string;
-  secondary_division_category: DivisionSelectionCategory;
-  secondary_reason: string;
-  cv_file_name: string;
-  cv_file_size_bytes: number;
-  cv_file_url: string | null;
-  cv_storage_path: string | null;
-  agreed_requirements: boolean;
-  agreed_truth: boolean;
+  user_id?: string;
+  user_email?: string;
+  registration_code?: string | null;
+  status?: RegistrationStatus;
+  current_step?: number;
+  full_name?: string | null;
+  nim?: string | null;
+  fakultas?: string | null;
+  prodi?: string | null;
+  angkatan?: string | null;
+  whatsapp?: string | null;
+  primary_division_id?: string | null;
+  primary_division_name?: string | null;
+  primary_division_category?: DivisionSelectionCategory | null;
+  primary_reason?: string | null;
+  secondary_division_id?: string | null;
+  secondary_division_name?: string | null;
+  secondary_division_category?: DivisionSelectionCategory | null;
+  secondary_reason?: string | null;
+  cv_file_name?: string | null;
+  cv_file_size_bytes?: number | null;
+  cv_file_url?: string | null;
+  cv_storage_path?: string | null;
+  agreed_requirements?: boolean;
+  agreed_truth?: boolean;
+  submitted_at?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface RegistrationProgressData {
+  hasRecord: boolean;
+  status: RegistrationStatus | "none";
+  currentStep: number;
+  record?: SupabaseRegistrationRecord | null;
 }
 
 export interface RegistrationApiResponse {
   success: boolean;
   message: string;
   registrationCode?: string;
-  data?: RegistrationPayload;
+  field?: string;
+  data?: RegistrationPayload | SupabaseRegistrationRecord;
   error?: string;
 }
 

@@ -22,9 +22,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             id={id}
             type="checkbox"
-            className={`mt-0.5 h-4 w-4 rounded ${
-              error ? "border-red-500 ring-1 ring-red-500" : "border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800"
-            } text-[#B22234] focus:ring-[#B22234] shrink-0 cursor-pointer ${className}`}
+            className={`mt-0.5 h-4 w-4 rounded ${error ? "border-red-500 ring-1 ring-red-500" : "border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800"
+              } text-[#B22234] focus:ring-[#B22234] shrink-0 cursor-pointer ${className}`}
             {...props}
           />
           {label && <span className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{label}</span>}

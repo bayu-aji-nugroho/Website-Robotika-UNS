@@ -14,4 +14,9 @@ export * from "./Checkbox";
 export * from "./FormLabel";
 export * from "./ErrorMessage";
 export * from "./ThemeToggle";
+export * from "./AdminNavIcon";
+export * from "./AdminNavBadge";
+export * from "./AdminNavItemText";
+export * from "./AdminAvatar";
+export * from "./AdminLogoutButton";
 

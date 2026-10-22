@@ -23,6 +23,7 @@ import {
 export interface RegistrationRequirementsSectionProps {
   agreed: boolean;
   error?: string;
+  isLocked?: boolean;
   onAgreeChange: (val: boolean) => void;
   onNext: () => void;
   requirements?: RegistrationRequirementItem[];
@@ -33,6 +34,7 @@ export interface RegistrationRequirementsSectionProps {
 export const RegistrationRequirementsSection: React.FC<RegistrationRequirementsSectionProps> = ({
   agreed,
   error,
+  isLocked = false,
   onAgreeChange,
   onNext,
   requirements = registrationRequirements,
@@ -99,6 +101,7 @@ export const RegistrationRequirementsSection: React.FC<RegistrationRequirementsS
           <Checkbox
             id={content.agreement.id}
             checked={agreed}
+            disabled={isLocked}
             onChange={(e) => onAgreeChange(e.target.checked)}
             label={content.agreement.label}
             error={error}

@@ -143,21 +143,26 @@ export const registrationSteps: RegistrationStepItem[] = [
   },
   {
     id: 2,
+    title: "Autentikasi Akun Google",
+    shortTitle: "Akun Google",
+  },
+  {
+    id: 3,
     title: "Identitas Mahasiswa",
     shortTitle: "Identitas",
   },
   {
-    id: 3,
+    id: 4,
     title: "Pilihan Divisi",
     shortTitle: "Divisi",
   },
   {
-    id: 4,
+    id: 5,
     title: "Unggah Berkas CV",
     shortTitle: "Berkas CV",
   },
   {
-    id: 5,
+    id: 6,
     title: "Grup WA dan Tanda Terima",
     shortTitle: "Selesai",
   },
@@ -166,10 +171,10 @@ export const registrationSteps: RegistrationStepItem[] = [
 export const registrationRequirementsData: RegistrationRequirementsContent = {
   header: {
     stepBadge: "1",
-    stepText: "Langkah 1 dari 5",
+    stepText: "Langkah 1 dari 6",
     title: "Syarat Masuk dan Ketentuan Pendaftaran",
     description:
-      "Pastikan Anda memenuhi ketentuan berikut sebelum melanjutkan ke pengisian identitas.",
+      "Pastikan Anda memenuhi ketentuan berikut sebelum melanjutkan ke autentikasi akun Google.",
   },
   stagesSection: {
     title: "Tahapan Seleksi",
@@ -187,7 +192,7 @@ export const registrationRequirementsData: RegistrationRequirementsContent = {
     },
     next: {
       label: "Lanjut",
-      subLabel: " ke Identitas",
+      subLabel: " ke Akun Google",
     },
   },
 };
