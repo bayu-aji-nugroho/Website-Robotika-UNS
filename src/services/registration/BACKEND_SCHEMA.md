@@ -90,7 +90,7 @@ Menerima `multipart/form-data`, memverifikasi magic bytes PDF, mengunggah ke buc
   - `cv_file`: File biner PDF (maksimal 1.0 MB / 1.048.576 bytes)
   - `agreed_requirements`: `"true"`
   - `agreed_truth`: `"true"`
-- **Response**: Status `201 Created`, `{ "success": true, "registrationCode": "ROB-UNS-2026-XXXX", "data": ... }`
+- **Response**: Status `201 Created`, `{ "success": true, "registrationCode": "ROB-UNS-2026-XXXXXX", "data": ... }` (Suffix 6 karakter Crockford Base32 dengan 1 miliar kombinasi unik)
 
 ---
 
@@ -137,23 +137,38 @@ CREATE TABLE public.registrations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Hard Constraints
+-- Hard Constraints (Defense in Depth)
 ALTER TABLE public.registrations 
   ADD CONSTRAINT chk_fullname_no_numbers CHECK (full_name IS NULL OR full_name !~ '[0-9]');
 
 ALTER TABLE public.registrations 
   ADD CONSTRAINT chk_angkatan_allowed CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026'));
 
+ALTER TABLE public.registrations
+  ADD CONSTRAINT chk_status_allowed CHECK (status IN ('draft', 'submitted'));
+
+ALTER TABLE public.registrations
+  ADD CONSTRAINT chk_current_step_range CHECK (current_step BETWEEN 1 AND 6);
+
+ALTER TABLE public.registrations
+  ADD CONSTRAINT chk_nim_format CHECK (nim IS NULL OR (length(nim) BETWEEN 7 AND 12 AND nim ~* '^[FGTHIDEDBKMVLZCP][0-9A-Z]+$'));
+
+ALTER TABLE public.registrations
+  ADD CONSTRAINT chk_whatsapp_format CHECK (whatsapp IS NULL OR (whatsapp ~ '^08[0-9]{8,13}$'));
+
 -- Unique Indexes
 CREATE UNIQUE INDEX idx_registrations_user_id ON public.registrations(user_id);
 CREATE UNIQUE INDEX idx_registrations_nim ON public.registrations(UPPER(nim)) WHERE nim IS NOT NULL;
 CREATE INDEX idx_registrations_status ON public.registrations(status);
 
--- RLS Policies
+-- RLS Policies (Zero Trust Hardened: Direct Client Mutations are Blocked)
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "registrations_user_select" ON public.registrations FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "registrations_user_insert" ON public.registrations FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "registrations_user_update" ON public.registrations FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "registrations_user_select" ON public.registrations FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "registrations_user_insert" ON public.registrations FOR INSERT WITH CHECK (false);
+CREATE POLICY "registrations_user_update" ON public.registrations FOR UPDATE USING (false) WITH CHECK (false);
+
+-- Storage: Bucket 'cv-uploads' is strictly PRIVATE (public = false)
+-- File access is granted only through signed URLs (20 minutes / 1,200 seconds expiration per UU PDP).
 ```
 
 ---
@@ -167,4 +182,5 @@ CREATE POLICY "registrations_user_update" ON public.registrations FOR UPDATE USI
 | **NIM Duplikat** | `409 Conflict` | `{"success": false, "field": "nim", "error": "NIM I0724018 sudah digunakan oleh pendaftar lain. Silakan periksa kembali NIM Anda."}` |
 | **Format NIM Bukan Fakultas UNS** | `422 Unprocessable` | `{"success": false, "field": "nim", "error": "Format NIM tidak valid: inisial 'X' bukan kode fakultas resmi UNS (contoh valid: I0724018)."}` |
 | **Ukuran Berkas CV Melebihi 1 MB**| `413 Payload Too Large`| `{"success": false, "error": "Ukuran berkas CV melebihi batas 1.0 MB (terdeteksi: 1.45 MB)."}` |
+| **Rate Limit Terlampaui (Spam/Bruteforce)** | `429 Too Many Requests` | `{"success": false, "error": "Terlalu banyak permintaan pemeriksaan NIM. Silakan tunggu 58 detik sebelum mencoba kembali.", "retryAfter": 58}` |
 | **Token Tidak Ada / Kedaluwarsa** | `401 Unauthorized` | `{"success": false, "error": "Akses ditolak: Token autentikasi tidak ditemukan."}` |

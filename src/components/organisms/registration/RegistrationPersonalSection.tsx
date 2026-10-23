@@ -118,7 +118,6 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
             onChange={(e) => onFullNameChange(e.target.value)}
             autoComplete="name"
             error={!!errors.fullName}
-            placeholder="Contoh: Dimas Arya Prasetya"
             disabled={isDisabled}
           />
         </FormField>
@@ -128,7 +127,7 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
           htmlFor="reg-nim"
           required
           error={errors.nim}
-          helperText={facultyHelper || "Contoh format: I0724018 (diawali kode fakultas)"}
+          helperText={facultyHelper || "Format NIM UNS diawali kode fakultas"}
         >
           <Input
             id="reg-nim"
@@ -138,7 +137,6 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
             onChange={(e) => onNimChange(e.target.value.toUpperCase())}
             maxLength={12}
             error={!!errors.nim}
-            placeholder="I0724018"
             disabled={isDisabled}
           />
         </FormField>
@@ -175,7 +173,6 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
             value={prodi}
             onChange={(e) => onProdiChange(e.target.value)}
             error={!!errors.prodi}
-            placeholder="Contoh: S1 Teknik Elektro / D3 Teknik Informatika"
             disabled={isDisabled}
           />
         </FormField>
@@ -185,7 +182,7 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
           htmlFor="reg-wa"
           required
           error={errors.whatsapp}
-          helperText="Diawali 08 (10-15 digit), contoh: 081234567891"
+          helperText="Format nomor diawali 08 (10-15 digit)"
           className="sm:col-span-2"
         >
           <Input
@@ -195,7 +192,6 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
             onChange={(e) => onWhatsappChange(e.target.value)}
             autoComplete="tel"
             error={!!errors.whatsapp}
-            placeholder="081234567891"
             disabled={isDisabled}
           />
         </FormField>

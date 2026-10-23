@@ -38,9 +38,17 @@ export async function signInWithGoogle(redirectTo?: string) {
   const origin =
     typeof window !== "undefined" && window.location.origin
       ? window.location.origin
-      : "http://localhost:3000";
+      : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  const targetRedirect = redirectTo || `${origin}/register`;
+  let targetRedirect: string;
+  if (!redirectTo) {
+    targetRedirect = `${origin}/register`;
+  } else if (redirectTo.startsWith("http://") || redirectTo.startsWith("https://")) {
+    targetRedirect = redirectTo;
+  } else {
+    const path = redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`;
+    targetRedirect = `${origin}${path}`;
+  }
 
   return await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -78,8 +86,8 @@ export async function getAuthenticatedUser(): Promise<GoogleAuthUser | null> {
     console.warn("Gagal membaca sesi Supabase:", error);
   }
 
-  // Cek mock user jika sedang dalam pengujian lokal
-  if (typeof window !== "undefined") {
+  // Cek mock user jika sedang dalam pengujian lokal di mode development
+  if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
     const stored = localStorage.getItem(LOCAL_STORAGE_MOCK_USER_KEY);
     if (stored) {
       try {
@@ -114,6 +122,10 @@ export function formatSupabaseUser(user: User): GoogleAuthUser {
  * Helper login simulasi untuk pengujian lokal saat Google OAuth di Supabase belum disetup
  */
 export function setMockGoogleUser(customData?: Partial<GoogleAuthUser>): GoogleAuthUser {
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("setMockGoogleUser hanya diizinkan pada mode development.");
+  }
+
   const mockUser: GoogleAuthUser = {
     id: `mock-google-${Date.now()}`,
     email: customData?.email || "dimas.arya@student.uns.ac.id",

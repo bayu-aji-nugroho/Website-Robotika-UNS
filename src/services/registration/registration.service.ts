@@ -37,8 +37,21 @@ export function sanitizePhoneNumber(phone: string): string {
 }
 
 export function generateRegistrationCode(prefix = "ROB-UNS-2026"): string {
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  return `${prefix}-${randomSuffix}`;
+  const CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    let suffix = "";
+    for (let i = 0; i < 6; i++) {
+      suffix += CHARS[bytes[i] % 32];
+    }
+    return `${prefix}-${suffix}`;
+  }
+  let suffix = "";
+  for (let i = 0; i < 6; i++) {
+    suffix += CHARS.charAt(Math.floor(Math.random() * CHARS.length));
+  }
+  return `${prefix}-${suffix}`;
 }
 
 export const NIM_FACULTY_MAP: Record<string, string> = {
@@ -73,8 +86,8 @@ export async function getRegistrationProgress(): Promise<RegistrationProgressDat
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
-      // Cek apakah ada mock user di localStorage untuk keperluan development
-      if (typeof window !== "undefined") {
+      // Cek apakah ada mock user di localStorage khusus keperluan development lokal
+      if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
         const storedMock = localStorage.getItem("robotika_uns_mock_auth_user");
         if (storedMock) {
           const localDraft = localStorage.getItem("robotika_uns_mock_draft");
@@ -166,22 +179,25 @@ export async function savePermanentStep3(input: Step3IdentityInput): Promise<Sav
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      // Mock mode fallback untuk dev lokal jika login Supabase belum disetup
-      if (typeof window !== "undefined") {
-        const mockDraft: SupabaseRegistrationRecord = {
-          full_name: input.fullName,
-          nim: input.nim,
-          fakultas: getFacultyFromNim(input.nim),
-          prodi: input.prodi,
-          angkatan: input.angkatan,
-          whatsapp: sanitizePhoneNumber(input.whatsapp),
-          status: "draft",
-          current_step: 3,
-        };
-        localStorage.setItem("robotika_uns_mock_draft", JSON.stringify(mockDraft));
-        return { success: true, message: "Data tersimpan di penyimpanan lokal (Mock Mode).", data: mockDraft };
+      // Mock mode fallback khusus pengujian lokal di mode development jika login Supabase belum disetup
+      if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+        const storedMock = localStorage.getItem("robotika_uns_mock_auth_user");
+        if (storedMock) {
+          const mockDraft: SupabaseRegistrationRecord = {
+            full_name: input.fullName,
+            nim: input.nim,
+            fakultas: getFacultyFromNim(input.nim),
+            prodi: input.prodi,
+            angkatan: input.angkatan,
+            whatsapp: sanitizePhoneNumber(input.whatsapp),
+            status: "draft",
+            current_step: 3,
+          };
+          localStorage.setItem("robotika_uns_mock_draft", JSON.stringify(mockDraft));
+          return { success: true, message: "Data tersimpan di penyimpanan lokal (Mock Mode).", data: mockDraft };
+        }
       }
-      return { success: false, error: "Sesi login tidak ditemukan. Silakan login Google terlebih dahulu." };
+      return { success: false, error: "Sesi login tidak ditemukan atau telah kedaluwarsa. Silakan masuk dengan Akun Google terlebih dahulu." };
     }
 
     const { data, error } = await supabase.functions.invoke("registration-step", {
@@ -250,27 +266,30 @@ export async function savePermanentStep4(input: Step4DivisionInput): Promise<Sav
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      // Mock mode fallback
-      if (typeof window !== "undefined") {
-        const local = localStorage.getItem("robotika_uns_mock_draft");
-        const prev = local ? JSON.parse(local) : {};
-        const updated = {
-          ...prev,
-          primary_division_id: payload.primaryDivisionId,
-          primary_division_name: payload.primaryDivisionName,
-          primary_division_category: payload.primaryDivisionCategory,
-          primary_reason: payload.primaryReason,
-          secondary_division_id: payload.secondaryDivisionId,
-          secondary_division_name: payload.secondaryDivisionName,
-          secondary_division_category: payload.secondaryDivisionCategory,
-          secondary_reason: payload.secondaryReason,
-          status: "draft",
-          current_step: 4,
-        };
-        localStorage.setItem("robotika_uns_mock_draft", JSON.stringify(updated));
-        return { success: true, message: "Pilihan divisi tersimpan (Mock Mode).", data: updated };
+      // Mock mode fallback khusus pengujian lokal di mode development jika login Supabase belum disetup
+      if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+        const storedMock = localStorage.getItem("robotika_uns_mock_auth_user");
+        if (storedMock) {
+          const local = localStorage.getItem("robotika_uns_mock_draft");
+          const prev = local ? JSON.parse(local) : {};
+          const updated = {
+            ...prev,
+            primary_division_id: payload.primaryDivisionId,
+            primary_division_name: payload.primaryDivisionName,
+            primary_division_category: payload.primaryDivisionCategory,
+            primary_reason: payload.primaryReason,
+            secondary_division_id: payload.secondaryDivisionId,
+            secondary_division_name: payload.secondaryDivisionName,
+            secondary_division_category: payload.secondaryDivisionCategory,
+            secondary_reason: payload.secondaryReason,
+            status: "draft",
+            current_step: 4,
+          };
+          localStorage.setItem("robotika_uns_mock_draft", JSON.stringify(updated));
+          return { success: true, message: "Pilihan divisi tersimpan (Mock Mode).", data: updated };
+        }
       }
-      return { success: false, error: "Sesi tidak ditemukan." };
+      return { success: false, error: "Sesi login tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali dengan Akun Google." };
     }
 
     const { data, error } = await supabase.functions.invoke("registration-step", {
@@ -330,42 +349,51 @@ export async function submitFinalRegistrationWithFile(
     formData.append("agreed_truth", String(Boolean(input.agreedToCvTruth)));
 
     if (!session) {
-      // Mock mode fallback
-      const regCode = generateRegistrationCode();
-      const payload = buildRegistrationPayload(input);
-      payload.registrationCode = regCode;
+      // Mock mode fallback khusus pengujian lokal di mode development jika login Supabase belum disetup
+      if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+        const storedMock = localStorage.getItem("robotika_uns_mock_auth_user");
+        if (storedMock) {
+          const regCode = generateRegistrationCode();
+          const payload = buildRegistrationPayload(input);
+          payload.registrationCode = regCode;
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("robotika_uns_mock_draft", JSON.stringify({
-          ...payload,
-          status: "submitted",
-          current_step: 6,
-          registration_code: regCode,
-        }));
+          localStorage.setItem("robotika_uns_mock_draft", JSON.stringify({
+            ...payload,
+            status: "submitted",
+            current_step: 6,
+            registration_code: regCode,
+          }));
+
+          return {
+            success: true,
+            message: "Pendaftaran berhasil dikirim (Mock Mode).",
+            registrationCode: regCode,
+            data: {
+              status: "submitted",
+              current_step: 6,
+              full_name: input.fullName,
+              nim: input.nim,
+              prodi: input.prodi,
+              angkatan: input.angkatan,
+              whatsapp: input.whatsapp,
+              primary_division_id: input.primaryDivisionId,
+              primary_division_category: input.categoryMode1,
+              primary_reason: input.primaryReason,
+              secondary_division_id: input.secondaryDivisionId,
+              secondary_division_category: input.categoryMode2,
+              secondary_reason: input.secondaryReason,
+              registration_code: regCode,
+              agreed_requirements: input.agreedToRequirements,
+              agreed_truth: input.agreedToCvTruth,
+            } as SupabaseRegistrationRecord,
+          };
+        }
       }
 
       return {
-        success: true,
-        message: "Pendaftaran berhasil dikirim (Mock Mode).",
-        registrationCode: regCode,
-        data: {
-          status: "submitted",
-          current_step: 6,
-          full_name: input.fullName,
-          nim: input.nim,
-          prodi: input.prodi,
-          angkatan: input.angkatan,
-          whatsapp: input.whatsapp,
-          primary_division_id: input.primaryDivisionId,
-          primary_division_category: input.categoryMode1,
-          primary_reason: input.primaryReason,
-          secondary_division_id: input.secondaryDivisionId,
-          secondary_division_category: input.categoryMode2,
-          secondary_reason: input.secondaryReason,
-          registration_code: regCode,
-          agreed_requirements: input.agreedToRequirements,
-          agreed_truth: input.agreedToCvTruth,
-        } as SupabaseRegistrationRecord,
+        success: false,
+        message: "Sesi login Google tidak ditemukan atau telah berakhir. Silakan masuk kembali dengan Akun Google.",
+        error: "Sesi autentikasi tidak ditemukan.",
       };
     }
 

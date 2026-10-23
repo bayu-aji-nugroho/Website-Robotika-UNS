@@ -48,9 +48,76 @@ function sanitizePhone(phone: string): string {
 }
 
 function generateRegCode(prefix = "ROB-UNS-2026"): string {
-  const suffix = Math.floor(1000 + Math.random() * 9000);
+  // Karakter aman Crockford Base32 (32 karakter, tanpa angka/huruf ambigu 0/O, 1/I)
+  // Menghasilkan 32^6 = 1.073.741.824 kombinasi unik dengan distribusi probabilitas merata (zero bias)
+  const CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  let suffix = "";
+  for (let i = 0; i < 6; i++) {
+    suffix += CHARS[bytes[i] % 32];
+  }
   return `${prefix}-${suffix}`;
 }
+
+// ==============================================================================
+// 1. Konfigurasi Keamanan: Durasi Kedaluwarsa Signed URL CV (20 Menit = 1.200 Detik)
+// ==============================================================================
+const CV_SIGNED_URL_EXPIRES_IN = 20 * 60; // 20 menit sesuai UU PDP & Zero Trust
+
+// ==============================================================================
+// 2. Konfigurasi Keamanan: Rate Limiter In-Memory Sliding Window
+// ==============================================================================
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitRecord>();
+
+function cleanupRateLimitStore() {
+  const now = Date.now();
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
+function checkRateLimit(
+  key: string,
+  maxRequests: number,
+  windowMs = 60000
+): { allowed: boolean; remaining: number; retryAfterSeconds: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(key);
+
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    if (rateLimitStore.size > 2000) cleanupRateLimitStore();
+    return { allowed: true, remaining: maxRequests - 1, retryAfterSeconds: 0 };
+  }
+
+  if (record.count >= maxRequests) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((record.resetAt - now) / 1000));
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+
+  record.count += 1;
+  return {
+    allowed: true,
+    remaining: maxRequests - record.count,
+    retryAfterSeconds: 0,
+  };
+}
+
+const ACTION_RATE_LIMITS: Record<string, { max: number; windowMs: number; label: string }> = {
+  check_nim: { max: 20, windowMs: 60000, label: "pemeriksaan NIM" },
+  save_step_3: { max: 10, windowMs: 60000, label: "penyimpanan data identitas" },
+  save_step_4: { max: 10, windowMs: 60000, label: "penyimpanan pilihan divisi" },
+  submit_final: { max: 5, windowMs: 60000, label: "pengiriman berkas final CV" },
+  get_progress: { max: 30, windowMs: 60000, label: "pemeriksaan progres pendaftaran" },
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -97,6 +164,26 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // Proteksi Rate Limiting Khusus Aksi submit_final (Maks 5x per menit per user)
+      const submitRateCheck = checkRateLimit(`${user.id}:submit_final`, 5, 60000);
+      if (!submitRateCheck.allowed) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Terlalu banyak permintaan pengiriman berkas. Mohon tunggu ${submitRateCheck.retryAfterSeconds} detik sebelum mencoba kembali.`,
+            retryAfter: submitRateCheck.retryAfterSeconds,
+          }),
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+              "Retry-After": submitRateCheck.retryAfterSeconds.toString(),
+            },
+          }
+        );
+      }
+
       // 1. Ambil pendaftaran user saat ini
       const { data: existingReg, error: fetchErr } = await supabaseAdmin
         .from("registrations")
@@ -108,6 +195,17 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ success: false, error: "Data pendaftaran tidak ditemukan. Pastikan Anda telah mengisi identitas dan pilihan divisi." }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // KETENTUAN INTEGRITAS: Pastikan Langkah 3 (Identitas) dan Langkah 4 (Divisi) sudah terisi lengkap
+      if (!existingReg.full_name || !existingReg.nim || !existingReg.primary_division_id) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Data pendaftaran belum lengkap. Anda wajib menyelesaikan Langkah 3 (Identitas) dan Langkah 4 (Pilihan Divisi) sebelum mengirim berkas final.",
+          }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -173,7 +271,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Upload ke Supabase Storage (cv-uploads)
+      // Upload ke Supabase Storage Private (cv-uploads)
       const safeNim = (existingReg.nim || "NIM").replace(/[^a-zA-Z0-9]/g, "");
       const safeAngkatan = existingReg.angkatan || "2026";
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -193,30 +291,59 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const { data: publicUrlData } = supabaseAdmin.storage
+      // Gunakan Signed URL bertempo aman untuk bucket privat (20 menit / 1.200 detik sesuai UU PDP)
+      const { data: signedUrlData } = await supabaseAdmin.storage
         .from("cv-uploads")
-        .getPublicUrl(storagePath);
+        .createSignedUrl(storagePath, CV_SIGNED_URL_EXPIRES_IN);
 
-      const regCode = existingReg.registration_code || generateRegCode();
+      let regCode = existingReg.registration_code;
+      let updatedRecord = null;
+      let updateErr = null;
 
-      const { data: updatedRecord, error: updateErr } = await supabaseAdmin
-        .from("registrations")
-        .update({
-          registration_code: regCode,
-          status: "submitted",
-          current_step: 6,
-          cv_file_name: file.name,
-          cv_file_size_bytes: file.size,
-          cv_storage_path: storagePath,
-          cv_file_url: publicUrlData.publicUrl,
-          agreed_requirements: agreedRequirements,
-          agreed_truth: agreedTruth,
-          submitted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id)
-        .select()
-        .single();
+      // Loop pengulangan hingga 3x jika terjadi tabrakan unik pada registration_code
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (!regCode) {
+          regCode = generateRegCode();
+        }
+
+        const res = await supabaseAdmin
+          .from("registrations")
+          .update({
+            registration_code: regCode,
+            status: "submitted",
+            current_step: 6,
+            cv_file_name: file.name,
+            cv_file_size_bytes: file.size,
+            cv_storage_path: storagePath,
+            cv_file_url: signedUrlData?.signedUrl || "",
+            agreed_requirements: agreedRequirements,
+            agreed_truth: agreedTruth,
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .select()
+          .single();
+
+        if (!res.error) {
+          updatedRecord = res.data;
+          updateErr = null;
+          break;
+        }
+
+        // Jika terbentur duplicate key unik pada registration_code, buat kode baru dan ulangi
+        if (
+          res.error.code === "23505" &&
+          (res.error.message?.includes("registration_code") || res.error.details?.includes("registration_code"))
+        ) {
+          regCode = "";
+          updateErr = res.error;
+          continue;
+        }
+
+        updateErr = res.error;
+        break;
+      }
 
       if (updateErr) {
         return new Response(
@@ -240,6 +367,50 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { action, payload } = body;
 
+    // Proteksi Rate Limiting Global per User (Maks 45 request per menit)
+    const globalRateCheck = checkRateLimit(`global:${user.id}`, 45, 60000);
+    if (!globalRateCheck.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Terlalu banyak permintaan sistem. Silakan tunggu ${globalRateCheck.retryAfterSeconds} detik sebelum mencoba lagi.`,
+          retryAfter: globalRateCheck.retryAfterSeconds,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": globalRateCheck.retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
+
+    // Proteksi Rate Limiting Spesifik per Aksi (Misal check_nim max 20x/menit)
+    const limitConfig = ACTION_RATE_LIMITS[action || "unknown"];
+    if (limitConfig) {
+      const actionRateCheck = checkRateLimit(`${user.id}:${action}`, limitConfig.max, limitConfig.windowMs);
+      if (!actionRateCheck.allowed) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            available: false,
+            error: `Terlalu banyak permintaan ${limitConfig.label}. Silakan tunggu ${actionRateCheck.retryAfterSeconds} detik sebelum mencoba kembali.`,
+            retryAfter: actionRateCheck.retryAfterSeconds,
+          }),
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+              "Retry-After": actionRateCheck.retryAfterSeconds.toString(),
+            },
+          }
+        );
+      }
+    }
+
     // 1. Action: get_progress
     if (action === "get_progress") {
       const { data, error } = await supabaseAdmin
@@ -253,6 +424,20 @@ Deno.serve(async (req: Request) => {
           JSON.stringify({ success: false, error: error.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      // Jika berkas CV tersimpan di storage privat, perbarui signed URL aktif (20 menit / 1.200 detik)
+      if (data && data.cv_storage_path) {
+        try {
+          const { data: signedData } = await supabaseAdmin.storage
+            .from("cv-uploads")
+            .createSignedUrl(data.cv_storage_path, CV_SIGNED_URL_EXPIRES_IN);
+          if (signedData?.signedUrl) {
+            data.cv_file_url = signedData.signedUrl;
+          }
+        } catch {
+          // Fallback tanpa menggagalkan pengembalian record
+        }
       }
 
       return new Response(
@@ -504,6 +689,37 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (upsertErr) {
+        const errStr = upsertErr.message || "";
+        if (upsertErr.code === "23505" || errStr.includes("idx_registrations_nim")) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              field: "nim",
+              error: `NIM ${trimmedNim} sudah digunakan oleh pendaftar lain. Silakan periksa kembali NIM Anda.`,
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (errStr.includes("chk_nim_format")) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              field: "nim",
+              error: `Format NIM tidak valid. Pastikan NIM diawali kode fakultas resmi UNS dan memiliki 7-12 karakter.`,
+            }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (errStr.includes("chk_whatsapp_format")) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              field: "whatsapp",
+              error: `Nomor WhatsApp tidak valid. Format harus diawali 08 dengan 10-15 digit angka.`,
+            }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         return new Response(
           JSON.stringify({ success: false, error: `Gagal menyimpan identitas: ${upsertErr.message}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

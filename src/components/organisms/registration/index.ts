@@ -11,4 +11,7 @@ export * from "./RegistrationPersonalSection";
 export * from "./RegistrationDivisionSection";
 export * from "./RegistrationCvSection";
 export * from "./RegistrationSuccessSection";
+export * from "./RegistrationConfirmModals";
+export * from "./useRegistrationForm";
+export * from "./registrationValidation";
 export * from "./RegistrationForm";
