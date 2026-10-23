@@ -16,4 +16,5 @@ export * from "./AdminNavItem";
 export * from "./AdminUserProfileCard";
 export * from "./NavUserMenu";
 export * from "./ConfirmationModal";
+export * from "./AdminWhatsAppButton";
 

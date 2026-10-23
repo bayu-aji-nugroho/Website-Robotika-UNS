@@ -8,7 +8,11 @@ fungsi [ Komponen container utama formulir pendaftaran 6 langkah: Syarat -> Akun
 "use client";
 
 import React from "react";
-import { RegistrationStepper, RegistrationStepItem } from "@/src/components/molecules";
+import {
+  RegistrationStepper,
+  RegistrationStepItem,
+  AdminWhatsAppButton,
+} from "@/src/components/molecules";
 import { RegistrationRequirementsSection } from "./RegistrationRequirementsSection";
 import { RegistrationAuthSection } from "./RegistrationAuthSection";
 import { RegistrationPersonalSection } from "./RegistrationPersonalSection";
@@ -251,6 +255,9 @@ export const RegistrationForm: React.FC = () => {
           onReset={handleReset}
         />
       )}
+
+      {/* Kartu Bantuan WhatsApp Panitia Khusus Langkah 1-5 (Sebelum Finalisasi) */}
+      {currentStep < 6 && <AdminWhatsAppButton variant="card" />}
 
       {/* Modal Dialog Konfirmasi Simpan Permanen & Finalisasi */}
       <RegistrationConfirmModals

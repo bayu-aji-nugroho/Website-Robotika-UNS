@@ -10,6 +10,7 @@ fungsi [ Komponen pemblokir halaman pendaftaran (Page Blocker) saat status OPREC
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, ShieldAlert, ExternalLink } from "lucide-react";
+import { AdminWhatsAppButton } from "@/src/components/molecules";
 
 interface RegistrationClosedBlockerProps {
   label?: string;
@@ -59,6 +60,12 @@ export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps>
 
           {/* Tombol Aksi */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <AdminWhatsAppButton
+              variant="button"
+              label="Tanya Admin via WhatsApp"
+              customMessage="Halo Admin OPREC UKM Robotika UNS, saya ingin bertanya mengenai jadwal dan informasi pendaftaran calon anggota baru..."
+            />
+
             <a
               href="https://www.instagram.com/uns_robotika/"
               target="_blank"

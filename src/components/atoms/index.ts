@@ -19,4 +19,5 @@ export * from "./AdminNavBadge";
 export * from "./AdminNavItemText";
 export * from "./AdminAvatar";
 export * from "./AdminLogoutButton";
+export * from "./WhatsAppIcon";
 

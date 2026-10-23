@@ -15,7 +15,11 @@ export const metadata: Metadata = {
   description: "Innovate and Elevate",
   keywords: ["Robotika UNS", "Universitas Sebelas Maret", "KRI", "Robotics", "Teknik UNS"],
   icons: {
-    icon: "/logo.jpg",
+    icon: [
+      { url: "/logo.jpg" },
+      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
     shortcut: "/logo.jpg",
     apple: "/logo.jpg",
   },

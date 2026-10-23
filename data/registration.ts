@@ -196,3 +196,23 @@ export const registrationRequirementsData: RegistrationRequirementsContent = {
     },
   },
 };
+
+export interface AdminWaConfig {
+  number: string;
+  displayNumber: string;
+  defaultMessage: string;
+  getUrl: (customMessage?: string) => string;
+}
+
+export const ADMIN_WA_CONFIG: AdminWaConfig = {
+  // Format nomor WhatsApp internasional resmi (diawali 62 tanpa tanda + atau spasi)
+  number: process.env.NEXT_PUBLIC_ADMIN_WA_NUMBER || "6281234567890",
+  displayNumber: process.env.NEXT_PUBLIC_ADMIN_WA_DISPLAY || "+62 812-3456-7890",
+  defaultMessage:
+    "Halo Admin OPREC UKM Robotika UNS, saya calon anggota baru ingin bertanya seputar pendaftaran...",
+  getUrl(customMessage?: string) {
+    const rawNum = (this.number || "6281234567890").replace(/[^0-9]/g, "");
+    const msg = customMessage || this.defaultMessage;
+    return `https://wa.me/${rawNum}?text=${encodeURIComponent(msg)}`;
+  },
+};
