@@ -5,7 +5,7 @@ import { Navbar, HeroSection, AboutSection, DivisionSection, ContactFooter } fro
 
 export const LandingPageTemplate: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-[#f7fafd] dark:bg-[#0c0d0e] text-[#102e4a] dark:text-[#f4f4f5] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#f7fafd] dark:bg-[#121316] text-[#102e4a] dark:text-[#f4f4f5] transition-colors duration-200">
       <Navbar />
       <main className="flex-1">
         <HeroSection />

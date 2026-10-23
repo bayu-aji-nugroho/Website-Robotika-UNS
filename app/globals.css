@@ -12,7 +12,7 @@
 
 @layer base {
   :root {
-    /* New Color Palette: Red, White, Sand Beige, Sienna Brown, Dark Maroon */
+    
     --color-palette-red: #B22234;
     --color-palette-white: #FFFFFF;
     --color-palette-beige: #D9C6B2;
@@ -36,11 +36,11 @@
   }
 
   .dark {
-    --color-bg-light: #090a0c;
-    --color-bg-subtle: #141518;
-    --color-text-main: #f4f4f5;
-    --color-text-muted: #a1a1aa;
-    --color-border-light: #27272a;
+    --color-bg-light: #121316;
+    --color-bg-subtle: #18191e;
+    --color-text-main: #f3f4f6;
+    --color-text-muted: #9ca3af;
+    --color-border-light: #27282f;
   }
 }
 
@@ -55,7 +55,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Glassmorphism utility with warm beige border & soft shadow */
 .glass-panel {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
@@ -90,7 +89,7 @@ body {
   border-color: #B22234;
 }
 
-/* Warm grid pattern background */
+
 .bg-grid-pattern {
   background-size: 32px 32px;
   background-image:

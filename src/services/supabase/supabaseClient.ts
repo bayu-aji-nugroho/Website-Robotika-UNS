@@ -5,7 +5,7 @@ fungsi [ Inisialisasi Supabase JS Client dan wrapper fungsi helper autentikasi G
 -----------------------------------------------
 */
 
-import { createClient, SupabaseClient, User, Session } from "@supabase/supabase-js";
+import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nrjorfpizemjgtaajgvh.supabase.co";

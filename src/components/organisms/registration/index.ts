@@ -15,3 +15,4 @@ export * from "./RegistrationConfirmModals";
 export * from "./useRegistrationForm";
 export * from "./registrationValidation";
 export * from "./RegistrationForm";
+export * from "./RegistrationClosedBlocker";

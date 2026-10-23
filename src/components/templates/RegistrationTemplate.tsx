@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ RegistrationTemplate.tsx ] 
-fungsi [ Komponen template halaman pendaftaran calon anggota baru dengan bilah navigasi atas terintegrasi profil pengguna dan wadah formulir. ]
+fungsi [ Komponen template halaman pendaftaran calon anggota baru dengan pengecekan gerbang OPREC basis data, navigasi profil pengguna, dan wadah formulir atau pemblokir akses jika pendaftaran ditutup ]
 -----------------------------------------------
 */
 
@@ -10,7 +10,7 @@ fungsi [ Komponen template halaman pendaftaran calon anggota baru dengan bilah n
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { RegistrationForm } from "../organisms";
+import { RegistrationForm, RegistrationClosedBlocker } from "../organisms";
 import { Container, ThemeToggle } from "../atoms";
 import { NavUserMenu } from "../molecules";
 import {
@@ -19,13 +19,30 @@ import {
   signOutUser,
   supabase,
   formatSupabaseUser,
+  AdminSettings,
+  DEFAULT_ADMIN_SETTINGS,
+  getAdminSettings,
 } from "@/src/services";
 
-export const RegistrationTemplate: React.FC = () => {
+interface RegistrationTemplateProps {
+  initialSettings?: AdminSettings | null;
+}
+
+export const RegistrationTemplate: React.FC<RegistrationTemplateProps> = ({
+  initialSettings,
+}) => {
   const [user, setUser] = useState<GoogleAuthUser | null>(null);
+  const [settings, setSettings] = useState<AdminSettings>(
+    initialSettings || DEFAULT_ADMIN_SETTINGS
+  );
 
   useEffect(() => {
     let isMounted = true;
+
+    // Ambil konfigurasi status OPREC terpusat dari database
+    getAdminSettings().then((s) => {
+      if (isMounted) setSettings(s);
+    });
 
     getAuthenticatedUser().then((u) => {
       if (isMounted) setUser(u);
@@ -61,7 +78,7 @@ export const RegistrationTemplate: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F9F9F8] dark:bg-[#0c0d0e] text-[#18181b] dark:text-[#f4f4f5] print:bg-white print:min-h-0 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#F9F9F8] dark:bg-[#121316] text-[#18181b] dark:text-[#f4f4f5] print:bg-white print:min-h-0 transition-colors duration-200">
       <main className="flex-1 py-4 sm:py-8 lg:py-12 print:py-0">
         <Container size="lg" className="print:max-w-none print:p-0">
           <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4 print:max-w-none print:space-y-0 print:m-0">
@@ -82,8 +99,12 @@ export const RegistrationTemplate: React.FC = () => {
 
             <h1 className="sr-only">Pendaftaran Calon Anggota Robotika UNS</h1>
 
-            <section aria-label="Formulir Pendaftaran Multi-Sesi">
-              <RegistrationForm />
+            <section aria-label="Gerbang Pendaftaran Anggota">
+              {settings.is_oprec ? (
+                <RegistrationForm />
+              ) : (
+                <RegistrationClosedBlocker label={settings.label} />
+              )}
             </section>
           </div>
         </Container>

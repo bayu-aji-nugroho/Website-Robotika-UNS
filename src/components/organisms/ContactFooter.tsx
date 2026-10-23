@@ -8,6 +8,7 @@ fungsi [ Komponen footer kontak dan informasi organisasi yang menampilkan identi
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Container } from "../atoms";
 import {
   Mail,
@@ -35,24 +36,26 @@ const GithubIcon = () => (
 
 export const ContactFooter: React.FC = () => {
   return (
-    <footer id="kontak" className="pt-10 sm:pt-14 pb-8 bg-white dark:bg-[#0c0d0e] border-t border-[#e4e4e7] dark:border-zinc-800 transition-colors duration-200">
+    <footer id="kontak" className="pt-10 sm:pt-14 pb-8 bg-white dark:bg-[#121316] border-t border-[#e4e4e7] dark:border-zinc-800 transition-colors duration-200">
       <Container size="lg">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-6 space-y-6">
             <div className="flex items-center gap-3">
+              <Image
+                src="/logo.jpg"
+                alt="Logo Tim Robotika UNS"
+                width={44}
+                height={44}
+                className="h-11 w-11 object-contain rounded-full shrink-0"
+              />
+
+              <div className="h-8 w-[1px] bg-[#e4e4e7] dark:bg-zinc-800 shrink-0" />
+
               <img
                 src="https://spmb.uns.ac.id/themes/website/assets/images/logo-uns.png"
                 alt="Logo Universitas Sebelas Maret"
                 className="h-11 w-auto object-contain shrink-0"
               />
-              <div>
-                <h3 className="text-base font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-snug">
-                  Universitas Sebelas Maret
-                </h3>
-                <p className="text-xs font-bold text-[#B22234] dark:text-red-400 leading-tight mt-0.5">
-                  Unit Kegiatan Mahasiswa Robotika
-                </p>
-              </div>
             </div>
 
             <div className="flex flex-row sm:flex-col items-center sm:items-start gap-2 sm:gap-2.5 pt-1">

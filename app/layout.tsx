@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   title: "Robotika Universitas Sebelas Maret",
   description: "Innovate and Elevate",
   keywords: ["Robotika UNS", "Universitas Sebelas Maret", "KRI", "Robotics", "Teknik UNS"],
+  icons: {
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({
@@ -53,7 +58,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans antialiased text-[#102e4a] dark:text-[#f4f4f5] bg-[#f7fafd] dark:bg-[#0c0d0e] transition-colors duration-200">
+      <body className="min-h-full flex flex-col font-sans antialiased text-[#102e4a] dark:text-[#f4f4f5] bg-[#f7fafd] dark:bg-[#121316] transition-colors duration-200">
         <ThemeProvider>
           {children}
         </ThemeProvider>

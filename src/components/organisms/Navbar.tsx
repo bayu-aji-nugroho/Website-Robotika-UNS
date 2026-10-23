@@ -73,7 +73,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0c0d0e]/95 backdrop-blur-md transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#121316]/95 backdrop-blur-md transition-all duration-200 ${
         scrolled
           ? "border-b border-[#e4e4e7] dark:border-zinc-800 py-3 sm:py-4 shadow-2xs"
           : "py-3.5 sm:py-6"
@@ -89,7 +89,7 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <Link
                 href="/register"
-                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] rounded-md transition-colors shadow-xs"
+                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] rounded-md transition-colors shadow-xs"
               >
                 Daftar Sekarang
               </Link>
@@ -121,7 +121,7 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 p-4 rounded-xl bg-white dark:bg-[#141518] border border-[#e4e4e7] dark:border-zinc-800 space-y-3 shadow-lg">
+          <div className="md:hidden mt-4 p-4 rounded-xl bg-white dark:bg-[#18191e] border border-[#e4e4e7] dark:border-zinc-800 space-y-3 shadow-lg">
             <NavLinks
               className="flex-col items-start gap-3"
               onItemClick={() => setMobileMenuOpen(false)}
@@ -131,7 +131,7 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] rounded-md transition-colors"
+                className="block text-center py-2 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] rounded-md transition-colors"
               >
                 Daftar Sekarang
               </Link>

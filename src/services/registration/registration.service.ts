@@ -6,7 +6,7 @@ fungsi [ Layanan pendaftaran calon anggota Robotika UNS yang terintegrasi dengan
 */
 
 import { allRegistrationDivisions } from "@/data/registration";
-import { supabase, GoogleAuthUser } from "../supabase/supabaseClient";
+import { supabase } from "../supabase/supabaseClient";
 import {
   RegistrationFormInput,
   RegistrationPayload,

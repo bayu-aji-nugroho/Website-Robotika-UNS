@@ -101,8 +101,11 @@ export function useRegistrationForm() {
   // Jika sudah berstatus submitted, paksa tampilan langsung terkunci di sesi akhir (Langkah 6)
   useEffect(() => {
     if (isFullySubmitted && currentStep !== 6) {
-      setCurrentStep(6);
-      scrollToTop();
+      const timer = setTimeout(() => {
+        setCurrentStep(6);
+        scrollToTop();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isFullySubmitted, currentStep, scrollToTop]);
 

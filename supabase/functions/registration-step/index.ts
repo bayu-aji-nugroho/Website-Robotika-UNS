@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,6 +119,25 @@ const ACTION_RATE_LIMITS: Record<string, { max: number; windowMs: number; label:
   get_progress: { max: 30, windowMs: 60000, label: "pemeriksaan progres pendaftaran" },
 };
 
+async function checkOprecStatus(adminClient: SupabaseClient): Promise<{ isOpen: boolean; label: string }> {
+  try {
+    const { data } = await adminClient
+      .from("admin_settings")
+      .select("is_oprec, label")
+      .eq("id", 1)
+      .maybeSingle();
+    return {
+      isOpen: data ? Boolean(data.is_oprec) : false,
+      label: data?.label || "Informasi pendaftaran segera diumumkan",
+    };
+  } catch {
+    return {
+      isOpen: false,
+      label: "Informasi pendaftaran segera diumumkan",
+    };
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -142,6 +161,9 @@ Deno.serve(async (req: Request) => {
     });
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Periksa status OPREC global dari database
+    const oprecStatus = await checkOprecStatus(supabaseAdmin);
+
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       return new Response(
@@ -161,6 +183,19 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ success: false, error: `Action '${action}' tidak didukung untuk multipart form.` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validasi Gerbang OPREC: Blokir pengiriman berkas jika OPREC sedang ditutup
+      if (!oprecStatus.isOpen) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Pendaftaran calon anggota UKM Robotika UNS sedang ditutup. Tidak diperkenankan mengirim berkas.",
+            isOprec: false,
+            label: oprecStatus.label,
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -277,7 +312,7 @@ Deno.serve(async (req: Request) => {
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const storagePath = `${safeAngkatan}/${safeNim}_${Date.now()}_${cleanFileName}`;
 
-      const { data: uploadData, error: uploadErr } = await supabaseAdmin.storage
+      const { error: uploadErr } = await supabaseAdmin.storage
         .from("cv-uploads")
         .upload(storagePath, fileBuffer, {
           contentType: "application/pdf",
@@ -441,8 +476,26 @@ Deno.serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, data: data || null }),
+        JSON.stringify({
+          success: true,
+          data: data || null,
+          isOprec: oprecStatus.isOpen,
+          oprecLabel: oprecStatus.label,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Gerbang OPREC Server-Side: Blokir semua aksi mutasi (NIM check, save step 3, save step 4) jika OPREC ditutup
+    if (!oprecStatus.isOpen) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Pendaftaran calon anggota UKM Robotika UNS sedang ditutup. Tidak diperkenankan menyimpan atau memodifikasi data.",
+          isOprec: false,
+          label: oprecStatus.label,
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
