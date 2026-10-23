@@ -43,22 +43,14 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
     <div className="space-y-4 sm:space-y-5 max-w-3xl mx-auto">
       {/* 1. Bagian Petunjuk Langkah Selanjutnya & Tautan Komunikasi WhatsApp (Di Posisi Teratas) */}
       <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-3.5 print:hidden shadow-xs transition-colors">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-[#25D366] shrink-0 mt-0.5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-[#25D366] shrink-0">
             <WhatsAppIcon className="w-5 h-5" />
           </div>
-          <div className="space-y-1 min-w-0">
+          <div className="min-w-0">
             <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100 font-[family-name:var(--font-space-grotesk)] tracking-tight">
-              Instruksi Selanjutnya: Wajib Masuk Grup WhatsApp
+              Wajib Masuk Grup WhatsApp Calon Anggota
             </h2>
-            <ol className="list-decimal list-inside space-y-1 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              <li>
-                <strong className="text-zinc-800 dark:text-zinc-200 font-semibold">Bergabung ke grup WhatsApp resmi</strong> calon anggota untuk jadwal seleksi, pembagian kelompok, dan tes teknis.
-              </li>
-              <li>
-                <strong className="text-zinc-800 dark:text-zinc-200 font-semibold">Simpan atau cetak</strong> tanda terima pendaftaran di bawah ini sebagai arsip pribadi.
-              </li>
-            </ol>
           </div>
         </div>
 
@@ -237,10 +229,6 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
             </div>
           )}
 
-          {/* Catatan Legalitas Dokumen */}
-          <div className="pt-2 text-[11px] text-zinc-500 dark:text-zinc-400 border-t border-dashed border-zinc-200 dark:border-zinc-800 leading-relaxed">
-            Dokumen ini diterbitkan secara elektronik oleh Sistem Pendaftaran Open Recruitment UKM Robotika Universitas Sebelas Maret dan sah digunakan sebagai tanda bukti keikutsertaan seleksi tanpa tanda tangan basah.
-          </div>
         </div>
       </div>
 
