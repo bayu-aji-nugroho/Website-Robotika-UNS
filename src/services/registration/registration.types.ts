@@ -101,6 +101,24 @@ export interface RegistrationPayload {
   };
 }
 
+export interface DivisionRecord {
+  id: string;
+  name: string;
+  category: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface ApplicantDivisionRecord {
+  id: string;
+  applicant_id: string;
+  division_id: string;
+  priority: number;
+  reason: string;
+  created_at?: string;
+  divisions?: DivisionRecord;
+}
+
 export interface SupabaseRegistrationRecord {
   id?: string;
   user_id?: string;
@@ -122,6 +140,7 @@ export interface SupabaseRegistrationRecord {
   secondary_division_name?: string | null;
   secondary_division_category?: DivisionSelectionCategory | null;
   secondary_reason?: string | null;
+  applicant_divisions?: ApplicantDivisionRecord[];
   cv_file_name?: string | null;
   cv_file_size_bytes?: number | null;
   cv_file_url?: string | null;

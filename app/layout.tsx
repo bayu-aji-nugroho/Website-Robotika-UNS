@@ -34,7 +34,7 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${leagueSpartan.variable} h-full scroll-smooth`}
+      className={`${leagueSpartan.variable} h-full`}
     >
       <head>
         <script

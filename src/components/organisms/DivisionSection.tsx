@@ -93,7 +93,7 @@ export const DivisionSection: React.FC = () => {
                             {team.name}
                           </h4>
                           {team.badge && (
-                            <span className="block text-xs font-mono text-[#71717a] dark:text-zinc-400 leading-snug mt-1">
+                            <span className="block text-xs text-[#71717a] dark:text-zinc-400 font-normal leading-snug mt-1">
                               {team.badge}
                             </span>
                           )}
@@ -101,6 +101,10 @@ export const DivisionSection: React.FC = () => {
                       </div>
                       <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
                     </div>
+
+                    <p className="text-xs sm:text-sm text-[#52525b] dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                      {team.desc}
+                    </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-4 mt-5 border-t border-[#f4f4f5] dark:border-zinc-800/80 text-xs font-semibold text-[#B22234] dark:text-red-400">
@@ -136,14 +140,7 @@ export const DivisionSection: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      {item.badge && (
-                        <span className="text-xs text-[#71717a] dark:text-zinc-400 font-mono hidden sm:inline-block">
-                          {item.badge}
-                        </span>
-                      )}
-                      <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -170,14 +167,7 @@ export const DivisionSection: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      {item.badge && (
-                        <span className="text-xs text-[#71717a] dark:text-zinc-400 font-mono hidden sm:inline-block">
-                          {item.badge}
-                        </span>
-                      )}
-                      <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
                 ))}
               </div>

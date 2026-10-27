@@ -12,7 +12,7 @@ Sistem pendaftaran menerapkan prinsip **Zero Trust Architecture**:
 3. **Database Constraints (Defense in Depth)**: PostgreSQL menerapkan aturan keras:
    - `chk_fullname_no_numbers`: Nama tidak boleh mengandung angka.
    - `chk_angkatan_allowed`: Angkatan hanya diperbolehkan `2025` dan `2026`.
-   - `idx_registrations_nim`: NIM unik (tidak boleh dobel).
+   - `idx_applicants_nim`: NIM unik (tidak boleh dobel).
 4. **Row Level Security (RLS)**: Hanya pengguna pemilik data (`auth.uid() = user_id`) yang dapat membaca atau mengupdate draft pendaftarannya.
 
 ---
@@ -94,81 +94,100 @@ Menerima `multipart/form-data`, memverifikasi magic bytes PDF, mengunggah ke buc
 
 ---
 
-## 3. Desain Skema Database PostgreSQL Supabase
+## 3. Desain Skema Database PostgreSQL Supabase (Normalisasi 3NF)
+
+Arsitektur database telah dinormalisasi ke bentuk **Third Normal Form (3NF)** untuk skalabilitas dan integritas relasional:
 
 ```sql
-CREATE TABLE public.registrations (
+-- 1. Master Divisi
+CREATE TABLE public.divisions (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Biodata Pendaftar (Applicants)
+CREATE TABLE public.applicants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   user_email VARCHAR(255) NOT NULL,
   registration_code VARCHAR(32) UNIQUE,
-  status VARCHAR(20) NOT NULL DEFAULT 'draft',
-  current_step INT NOT NULL DEFAULT 3,
+  status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
+  current_step INT NOT NULL DEFAULT 3 CHECK (current_step BETWEEN 1 AND 6),
   
   -- Identitas
-  full_name VARCHAR(255),
+  full_name VARCHAR(255) CHECK (full_name IS NULL OR full_name !~ '[0-9]'),
   nim VARCHAR(30),
   fakultas VARCHAR(100),
   prodi VARCHAR(150),
-  angkatan VARCHAR(10),
-  whatsapp VARCHAR(30),
+  angkatan VARCHAR(10) CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026')),
+  whatsapp VARCHAR(30) CHECK (whatsapp IS NULL OR whatsapp ~ '^08[0-9]{8,13}$'),
   
-  -- Pilihan Divisi
-  primary_division_id VARCHAR(100),
-  primary_division_name VARCHAR(150),
-  primary_division_category VARCHAR(20),
-  primary_reason TEXT,
-  secondary_division_id VARCHAR(100),
-  secondary_division_name VARCHAR(150),
-  secondary_division_category VARCHAR(20),
-  secondary_reason TEXT,
-  
-  -- Berkas CV
+  -- Berkas CV & Persetujuan
   cv_file_name VARCHAR(255),
-  cv_file_size_bytes BIGINT,
   cv_storage_path TEXT,
-  cv_file_url TEXT,
   agreed_requirements BOOLEAN DEFAULT FALSE,
   agreed_truth BOOLEAN DEFAULT FALSE,
   
   -- Timestamps
-  submitted_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  submitted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Hard Constraints (Defense in Depth)
-ALTER TABLE public.registrations 
-  ADD CONSTRAINT chk_fullname_no_numbers CHECK (full_name IS NULL OR full_name !~ '[0-9]');
+CREATE UNIQUE INDEX idx_applicants_user_id ON public.applicants(user_id);
+CREATE UNIQUE INDEX idx_applicants_nim ON public.applicants(UPPER(nim)) WHERE nim IS NOT NULL;
+CREATE INDEX idx_applicants_status ON public.applicants(status);
 
-ALTER TABLE public.registrations 
-  ADD CONSTRAINT chk_angkatan_allowed CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026'));
+-- 3. Pivot Pilihan Divisi (Applicant Divisions - Relasional Scalable)
+CREATE TABLE public.applicant_divisions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  applicant_id UUID NOT NULL REFERENCES public.applicants(id) ON DELETE CASCADE,
+  division_id VARCHAR(50) NOT NULL REFERENCES public.divisions(id) ON DELETE RESTRICT,
+  priority INT NOT NULL CHECK (priority >= 1),
+  reason TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT uq_applicant_priority UNIQUE (applicant_id, priority),
+  CONSTRAINT uq_applicant_division UNIQUE (applicant_id, division_id)
+);
 
-ALTER TABLE public.registrations
-  ADD CONSTRAINT chk_status_allowed CHECK (status IN ('draft', 'submitted'));
+CREATE INDEX idx_applicant_divisions_lookup ON public.applicant_divisions(division_id, priority);
+CREATE INDEX idx_applicant_divisions_applicant ON public.applicant_divisions(applicant_id);
 
-ALTER TABLE public.registrations
-  ADD CONSTRAINT chk_current_step_range CHECK (current_step BETWEEN 1 AND 6);
+-- 4. Tabel Assessment (Penilaian Kelulusan)
+CREATE TABLE public.assessments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  applicant_id UUID NOT NULL REFERENCES public.applicants(id) ON DELETE CASCADE,
+  status VARCHAR(30) NOT NULL DEFAULT 'pertimbangan' CHECK (status IN ('diterima', 'ditolak', 'pertimbangan')),
+  notes TEXT,
+  assessed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT uq_assessment_applicant UNIQUE (applicant_id)
+);
 
-ALTER TABLE public.registrations
-  ADD CONSTRAINT chk_nim_format CHECK (nim IS NULL OR (length(nim) BETWEEN 7 AND 12 AND nim ~* '^[FGTHIDEDBKMVLZCP][0-9A-Z]+$'));
+CREATE INDEX idx_assessments_applicant ON public.assessments(applicant_id);
+CREATE INDEX idx_assessments_status ON public.assessments(status);
 
-ALTER TABLE public.registrations
-  ADD CONSTRAINT chk_whatsapp_format CHECK (whatsapp IS NULL OR (whatsapp ~ '^08[0-9]{8,13}$'));
-
--- Unique Indexes
-CREATE UNIQUE INDEX idx_registrations_user_id ON public.registrations(user_id);
-CREATE UNIQUE INDEX idx_registrations_nim ON public.registrations(UPPER(nim)) WHERE nim IS NOT NULL;
-CREATE INDEX idx_registrations_status ON public.registrations(status);
-
--- RLS Policies (Zero Trust Hardened: Direct Client Mutations are Blocked)
-ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "registrations_user_select" ON public.registrations FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "registrations_user_insert" ON public.registrations FOR INSERT WITH CHECK (false);
-CREATE POLICY "registrations_user_update" ON public.registrations FOR UPDATE USING (false) WITH CHECK (false);
-
--- Storage: Bucket 'cv-uploads' is strictly PRIVATE (public = false)
--- File access is granted only through signed URLs (20 minutes / 1,200 seconds expiration per UU PDP).
+-- 5. View Kompatibilitas Relasional & Reporting
+CREATE OR REPLACE VIEW public.view_registrations WITH (security_invoker = true) AS
+SELECT 
+  a.id, a.user_id, a.user_email, a.registration_code, a.status, a.current_step,
+  a.full_name, a.nim, a.fakultas, a.prodi, a.angkatan, a.whatsapp,
+  p1.division_id AS primary_division_id, d1.name AS primary_division_name, d1.category AS primary_division_category, p1.reason AS primary_reason,
+  p2.division_id AS secondary_division_id, d2.name AS secondary_division_name, d2.category AS secondary_division_category, p2.reason AS secondary_reason,
+  a.cv_file_name, a.cv_storage_path,
+  a.agreed_requirements, a.agreed_truth, a.submitted_at, a.created_at, a.updated_at,
+  COALESCE(ass.status, 'pertimbangan') AS assessment_status,
+  ass.notes AS assessment_notes
+FROM public.applicants a
+LEFT JOIN public.applicant_divisions p1 ON p1.applicant_id = a.id AND p1.priority = 1
+LEFT JOIN public.divisions d1 ON d1.id = p1.division_id
+LEFT JOIN public.applicant_divisions p2 ON p2.applicant_id = a.id AND p2.priority = 2
+LEFT JOIN public.divisions d2 ON d2.id = p2.division_id
+LEFT JOIN public.assessments ass ON ass.applicant_id = a.id;
 ```
 
 ---

@@ -91,7 +91,7 @@ export interface RegistrationRequirementsContent {
     stepBadge: string;
     stepText: string;
     title: string;
-    description: string;
+    description?: string;
   };
   stagesSection: {
     title: string;
@@ -173,8 +173,6 @@ export const registrationRequirementsData: RegistrationRequirementsContent = {
     stepBadge: "1",
     stepText: "Langkah 1 dari 6",
     title: "Syarat Masuk dan Ketentuan Pendaftaran",
-    description:
-      "Pastikan Anda memenuhi ketentuan berikut sebelum melanjutkan ke autentikasi akun Google.",
   },
   stagesSection: {
     title: "Tahapan Seleksi",

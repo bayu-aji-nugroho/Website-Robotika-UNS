@@ -8,8 +8,7 @@ fungsi [ Komponen pemblokir halaman pendaftaran (Page Blocker) saat status OPREC
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { ArrowLeft, ShieldAlert, ExternalLink } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { AdminWhatsAppButton } from "@/src/components/molecules";
 
 interface RegistrationClosedBlockerProps {
@@ -26,71 +25,46 @@ export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps>
   label = "Informasi pendaftaran segera diumumkan",
 }) => {
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      {/* Badge Status Pill sesuai Referensi Desain */}
-      <div className="flex justify-center sm:justify-start">
-        <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-md border border-[#e4e4e7] dark:border-zinc-800/80 bg-white dark:bg-[#1a1b20] text-xs shadow-xs">
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider bg-[#B22234] dark:bg-[#C52233] text-white">
-            OPREC
-          </span>
-          <span className="text-[#52525b] dark:text-zinc-300 font-medium text-xs">
-            {label}
-          </span>
-        </div>
-      </div>
-
+    <div className="space-y-4 animate-in fade-in duration-300">
       {/* Kartu Utama Blocker */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#16171c] p-6 sm:p-10 shadow-sm relative overflow-hidden">
-        <div className="relative space-y-6">
-          {/* Ikon & Header */}
-          <div className="space-y-3">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-[#B22234] dark:text-[#EE3B47]">
-              <ShieldAlert className="w-6 h-6" />
-            </div>
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#16171c] p-6 sm:p-8 shadow-xs">
+        <div className="space-y-5">
+          {/* Logo & Status */}
+          <div className="flex items-center justify-between gap-4">
+            <CalendarClock className="w-6 h-6" />
+            {label && label !== "Informasi pendaftaran segera diumumkan" && (
+              <span className="text-xs text-[#71717a] dark:text-zinc-400 font-medium">
+                {label}
+              </span>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]">
-                Pendaftaran Calon Anggota Ditutup
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
-                Pendaftaran calon anggota baru saat ini sedang ditutup. Pantau informasi terbaru dan jadwal pembukaan pendaftaran berikutnya melalui Instagram resmi UKM Robotika UNS.
-              </p>
-            </div>
+          <div className="space-y-1.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight font-['League_Spartan',sans-serif]">
+              Pendaftaran Ditutup
+            </h2>
+            <p className="text-xs sm:text-sm text-[#52525b] dark:text-zinc-400 max-w-lg leading-relaxed">
+              Pantau jadwal pembukaan pendaftaran berikutnya di Instagram resmi @uns_robotika.
+            </p>
           </div>
 
           {/* Tombol Aksi */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-            <AdminWhatsAppButton
-              variant="button"
-              label="Tanya Admin via WhatsApp"
-              customMessage="Halo Admin OPREC UKM Robotika UNS, saya ingin bertanya mengenai jadwal dan informasi pendaftaran calon anggota baru..."
-            />
-
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
             <a
               href="https://www.instagram.com/uns_robotika/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#B22234] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
             >
               <InstagramIcon />
-              <span>Info di Instagram</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Instagram @uns_robotika</span>
             </a>
 
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 text-xs sm:text-sm font-medium transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke Beranda</span>
-            </Link>
-          </div>
-
-          {/* Kanal Informasi Tambahan */}
-          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-            <div className="flex items-center gap-2">
-              <span>UKM Robotika Universitas Sebelas Maret (UNS)</span>
-            </div>
+            <AdminWhatsAppButton
+              variant="outline"
+              label="WhatsApp Panitia"
+              customMessage="Halo Admin OPREC UKM Robotika UNS, saya ingin bertanya mengenai jadwal pendaftaran calon anggota baru..."
+            />
           </div>
         </div>
       </div>

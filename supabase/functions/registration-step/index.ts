@@ -138,6 +138,68 @@ async function checkOprecStatus(adminClient: SupabaseClient): Promise<{ isOpen: 
   }
 }
 
+interface DivisionRelRecord {
+  name?: string | null;
+  category?: string | null;
+}
+
+interface ApplicantDivisionRelRecord {
+  id?: string;
+  applicant_id?: string;
+  division_id?: string;
+  priority?: number;
+  reason?: string;
+  divisions?: DivisionRelRecord | null;
+}
+
+interface ApplicantRawRecord {
+  id?: string;
+  user_id?: string;
+  user_email?: string;
+  registration_code?: string | null;
+  status?: string;
+  current_step?: number;
+  full_name?: string | null;
+  nim?: string | null;
+  fakultas?: string | null;
+  prodi?: string | null;
+  angkatan?: string | null;
+  whatsapp?: string | null;
+  applicant_divisions?: ApplicantDivisionRelRecord[];
+  cv_file_name?: string | null;
+  cv_file_size_bytes?: number | null;
+  cv_file_url?: string | null;
+  cv_storage_path?: string | null;
+  agreed_requirements?: boolean;
+  agreed_truth?: boolean;
+  submitted_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Format data applicant dari database ter-normalisasi (3NF)
+ * Menyertakan relasi divisi sekaligus properti flat untuk kompatibilitas mundur 100%
+ */
+function formatApplicantRecord(applicant: ApplicantRawRecord | null) {
+  if (!applicant) return null;
+  const divisions = applicant.applicant_divisions || [];
+  const p1 = divisions.find((d) => d.priority === 1);
+  const p2 = divisions.find((d) => d.priority === 2);
+
+  return {
+    ...applicant,
+    primary_division_id: p1?.division_id || null,
+    primary_division_name: p1?.divisions?.name || p1?.division_id || null,
+    primary_division_category: p1?.divisions?.category || "teknis",
+    primary_reason: p1?.reason || null,
+    secondary_division_id: p2?.division_id || null,
+    secondary_division_name: p2?.divisions?.name || p2?.division_id || null,
+    secondary_division_category: p2?.divisions?.category || "teknis",
+    secondary_reason: p2?.reason || null,
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -219,14 +281,14 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // 1. Ambil pendaftaran user saat ini
-      const { data: existingReg, error: fetchErr } = await supabaseAdmin
-        .from("registrations")
-        .select("*")
+      // 1. Ambil pendaftar dari tabel normalized applicants
+      const { data: existingApp, error: fetchErr } = await supabaseAdmin
+        .from("applicants")
+        .select("*, applicant_divisions(*, divisions(*))")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (fetchErr || !existingReg) {
+      if (fetchErr || !existingApp) {
         return new Response(
           JSON.stringify({ success: false, error: "Data pendaftaran tidak ditemukan. Pastikan Anda telah mengisi identitas dan pilihan divisi." }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -234,7 +296,8 @@ Deno.serve(async (req: Request) => {
       }
 
       // KETENTUAN INTEGRITAS: Pastikan Langkah 3 (Identitas) dan Langkah 4 (Divisi) sudah terisi lengkap
-      if (!existingReg.full_name || !existingReg.nim || !existingReg.primary_division_id) {
+      const hasDivisions = existingApp.applicant_divisions && existingApp.applicant_divisions.length >= 1;
+      if (!existingApp.full_name || !existingApp.nim || !hasDivisions) {
         return new Response(
           JSON.stringify({
             success: false,
@@ -245,7 +308,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // KETENTUAN IMMUTABILITY: Jika status sudah submitted, tolak kirim ulang!
-      if (existingReg.status === "submitted") {
+      if (existingApp.status === "submitted") {
         return new Response(
           JSON.stringify({
             success: false,
@@ -307,8 +370,8 @@ Deno.serve(async (req: Request) => {
       }
 
       // Upload ke Supabase Storage Private (cv-uploads)
-      const safeNim = (existingReg.nim || "NIM").replace(/[^a-zA-Z0-9]/g, "");
-      const safeAngkatan = existingReg.angkatan || "2026";
+      const safeNim = (existingApp.nim || "NIM").replace(/[^a-zA-Z0-9]/g, "");
+      const safeAngkatan = existingApp.angkatan || "2026";
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const storagePath = `${safeAngkatan}/${safeNim}_${Date.now()}_${cleanFileName}`;
 
@@ -331,7 +394,7 @@ Deno.serve(async (req: Request) => {
         .from("cv-uploads")
         .createSignedUrl(storagePath, CV_SIGNED_URL_EXPIRES_IN);
 
-      let regCode = existingReg.registration_code;
+      let regCode = existingApp.registration_code;
       let updatedRecord = null;
       let updateErr = null;
 
@@ -342,26 +405,27 @@ Deno.serve(async (req: Request) => {
         }
 
         const res = await supabaseAdmin
-          .from("registrations")
+          .from("applicants")
           .update({
             registration_code: regCode,
             status: "submitted",
             current_step: 6,
             cv_file_name: file.name,
-            cv_file_size_bytes: file.size,
             cv_storage_path: storagePath,
-            cv_file_url: signedUrlData?.signedUrl || "",
             agreed_requirements: agreedRequirements,
             agreed_truth: agreedTruth,
             submitted_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)
-          .select()
+          .select("*, applicant_divisions(*, divisions(*))")
           .single();
 
         if (!res.error) {
-          updatedRecord = res.data;
+          updatedRecord = formatApplicantRecord(res.data);
+          if (updatedRecord && signedUrlData?.signedUrl) {
+            updatedRecord.cv_file_url = signedUrlData.signedUrl;
+          }
           updateErr = null;
           break;
         }
@@ -430,8 +494,7 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({
             success: false,
-            available: false,
-            error: `Terlalu banyak permintaan ${limitConfig.label}. Silakan tunggu ${actionRateCheck.retryAfterSeconds} detik sebelum mencoba kembali.`,
+            error: `Terlalu banyak permintaan ${limitConfig.label}. Silakan tunggu ${actionRateCheck.retryAfterSeconds} detik sebelum mencoba lagi.`,
             retryAfter: actionRateCheck.retryAfterSeconds,
           }),
           {
@@ -449,8 +512,8 @@ Deno.serve(async (req: Request) => {
     // 1. Action: get_progress
     if (action === "get_progress") {
       const { data, error } = await supabaseAdmin
-        .from("registrations")
-        .select("*")
+        .from("applicants")
+        .select("*, applicant_divisions(*, divisions(*))")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -461,14 +524,16 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      const formattedData = formatApplicantRecord(data);
+
       // Jika berkas CV tersimpan di storage privat, perbarui signed URL aktif (20 menit / 1.200 detik)
-      if (data && data.cv_storage_path) {
+      if (formattedData && formattedData.cv_storage_path) {
         try {
           const { data: signedData } = await supabaseAdmin.storage
             .from("cv-uploads")
-            .createSignedUrl(data.cv_storage_path, CV_SIGNED_URL_EXPIRES_IN);
+            .createSignedUrl(formattedData.cv_storage_path, CV_SIGNED_URL_EXPIRES_IN);
           if (signedData?.signedUrl) {
-            data.cv_file_url = signedData.signedUrl;
+            formattedData.cv_file_url = signedData.signedUrl;
           }
         } catch {
           // Fallback tanpa menggagalkan pengembalian record
@@ -478,7 +543,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          data: data || null,
+          data: formattedData || null,
           isOprec: oprecStatus.isOpen,
           oprecLabel: oprecStatus.label,
         }),
@@ -486,7 +551,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Gerbang OPREC Server-Side: Blokir semua aksi mutasi (NIM check, save step 3, save step 4) jika OPREC ditutup
+    // Gerbang OPREC Server-Side: Blokir semua aksi mutasi jika OPREC ditutup
     if (!oprecStatus.isOpen) {
       return new Response(
         JSON.stringify({
@@ -510,7 +575,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const { data: existing } = await supabaseAdmin
-        .from("registrations")
+        .from("applicants")
         .select("id, user_id")
         .ilike("nim", rawNim)
         .neq("user_id", user.id)
@@ -537,14 +602,14 @@ Deno.serve(async (req: Request) => {
       const { fullName, nim, angkatan, prodi, whatsapp } = payload || {};
 
       // Cek apakah user sudah punya data tersimpan sebelumnya
-      const { data: existingReg } = await supabaseAdmin
-        .from("registrations")
+      const { data: existingApp } = await supabaseAdmin
+        .from("applicants")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
       // KETENTUAN IMMUTABILITY: Jika status submitted, tolak total!
-      if (existingReg?.status === "submitted") {
+      if (existingApp?.status === "submitted") {
         return new Response(
           JSON.stringify({
             success: false,
@@ -561,12 +626,12 @@ Deno.serve(async (req: Request) => {
       const sanitizedWa = sanitizePhone((whatsapp || "").trim());
 
       // KETENTUAN IMMUTABILITY: Jika identitas sudah pernah disimpan, tolak jika ada perubahan!
-      if (existingReg?.full_name && existingReg?.nim) {
+      if (existingApp?.full_name && existingApp?.nim) {
         const isAltered =
-          existingReg.full_name !== trimmedName ||
-          existingReg.nim !== trimmedNim ||
-          existingReg.angkatan !== trimmedAngkatan ||
-          existingReg.prodi !== trimmedProdi;
+          existingApp.full_name !== trimmedName ||
+          existingApp.nim !== trimmedNim ||
+          existingApp.angkatan !== trimmedAngkatan ||
+          existingApp.prodi !== trimmedProdi;
 
         if (isAltered) {
           return new Response(
@@ -583,7 +648,7 @@ Deno.serve(async (req: Request) => {
           JSON.stringify({
             success: true,
             message: "Data identitas sudah tersimpan permanen (Terkunci).",
-            data: existingReg,
+            data: formatApplicantRecord(existingApp),
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -682,7 +747,7 @@ Deno.serve(async (req: Request) => {
 
       // Cek Duplikasi NIM
       const { data: nimConflict } = await supabaseAdmin
-        .from("registrations")
+        .from("applicants")
         .select("id, user_id")
         .ilike("nim", trimmedNim)
         .neq("user_id", user.id)
@@ -719,9 +784,9 @@ Deno.serve(async (req: Request) => {
 
       const fakultas = NIM_FACULTY_MAP[firstLetter] || "-";
 
-      // Simpan Permanen (UPSERT)
+      // Simpan Permanen (UPSERT ke tabel applicants)
       const { data: savedRecord, error: upsertErr } = await supabaseAdmin
-        .from("registrations")
+        .from("applicants")
         .upsert(
           {
             user_id: user.id,
@@ -738,12 +803,12 @@ Deno.serve(async (req: Request) => {
           },
           { onConflict: "user_id" }
         )
-        .select()
+        .select("*, applicant_divisions(*, divisions(*))")
         .single();
 
       if (upsertErr) {
         const errStr = upsertErr.message || "";
-        if (upsertErr.code === "23505" || errStr.includes("idx_registrations_nim")) {
+        if (upsertErr.code === "23505" || errStr.includes("idx_applicants_nim") || errStr.includes("idx_registrations_nim")) {
           return new Response(
             JSON.stringify({
               success: false,
@@ -783,33 +848,39 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({
           success: true,
           message: "Data identitas berhasil disimpan permanen.",
-          data: savedRecord,
+          data: formatApplicantRecord(savedRecord),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 4. Action: save_step_4 (Pilihan Divisi)
+    // 4. Action: save_step_4 (Pilihan Divisi ke tabel normalisasi applicant_divisions)
     if (action === "save_step_4") {
       const {
         primaryDivisionId,
-        primaryDivisionName,
-        primaryDivisionCategory,
         primaryReason,
         secondaryDivisionId,
-        secondaryDivisionName,
-        secondaryDivisionCategory,
         secondaryReason,
       } = payload || {};
 
-      const { data: existingReg } = await supabaseAdmin
-        .from("registrations")
-        .select("*")
+      const { data: existingApp } = await supabaseAdmin
+        .from("applicants")
+        .select("*, applicant_divisions(*, divisions(*))")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      if (!existingApp) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Data identitas belum ditemukan. Silakan selesaikan Langkah 3 (Identitas) terlebih dahulu.",
+          }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // KETENTUAN IMMUTABILITY: Jika status submitted, tolak total!
-      if (existingReg?.status === "submitted") {
+      if (existingApp?.status === "submitted") {
         return new Response(
           JSON.stringify({
             success: false,
@@ -820,10 +891,14 @@ Deno.serve(async (req: Request) => {
       }
 
       // KETENTUAN IMMUTABILITY: Jika divisi sudah pernah disimpan, tolak jika ada perubahan!
-      if (existingReg?.primary_division_id && existingReg?.secondary_division_id) {
+      const existingDivs = (existingApp.applicant_divisions || []) as ApplicantDivisionRelRecord[];
+      const existingP1 = existingDivs.find((d) => d.priority === 1);
+      const existingP2 = existingDivs.find((d) => d.priority === 2);
+
+      if (existingP1 && existingP2) {
         const isAltered =
-          existingReg.primary_division_id !== primaryDivisionId ||
-          existingReg.secondary_division_id !== secondaryDivisionId;
+          existingP1.division_id !== primaryDivisionId ||
+          existingP2.division_id !== secondaryDivisionId;
 
         if (isAltered) {
           return new Response(
@@ -839,7 +914,7 @@ Deno.serve(async (req: Request) => {
           JSON.stringify({
             success: true,
             message: "Pilihan divisi sudah tersimpan permanen (Terkunci).",
-            data: existingReg,
+            data: formatApplicantRecord(existingApp),
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -885,27 +960,50 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const { data: updatedRecord, error: updateErr } = await supabaseAdmin
-        .from("registrations")
+      // Hapus data pilihan divisi lama (jika ada draft sebelumnya) lalu masukkan pilihan baru
+      await supabaseAdmin
+        .from("applicant_divisions")
+        .delete()
+        .eq("applicant_id", existingApp.id);
+
+      const { error: insertDivErr } = await supabaseAdmin
+        .from("applicant_divisions")
+        .insert([
+          {
+            applicant_id: existingApp.id,
+            division_id: primaryDivisionId,
+            priority: 1,
+            reason: pReason,
+          },
+          {
+            applicant_id: existingApp.id,
+            division_id: secondaryDivisionId,
+            priority: 2,
+            reason: sReason,
+          },
+        ]);
+
+      if (insertDivErr) {
+        return new Response(
+          JSON.stringify({ success: false, error: `Gagal menyimpan relasi pilihan divisi: ${insertDivErr.message}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Update current_step pendaftar menjadi 4
+      const { data: updatedApp, error: updateErr } = await supabaseAdmin
+        .from("applicants")
         .update({
-          primary_division_id: primaryDivisionId,
-          primary_division_name: primaryDivisionName || primaryDivisionId,
-          primary_division_category: primaryDivisionCategory || "teknis",
-          primary_reason: pReason,
-          secondary_division_id: secondaryDivisionId,
-          secondary_division_name: secondaryDivisionName || secondaryDivisionId,
-          secondary_division_category: secondaryDivisionCategory || "teknis",
-          secondary_reason: sReason,
           current_step: 4,
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id)
-        .select()
+        .select("*, applicant_divisions(*, divisions(*))")
         .single();
 
       if (updateErr) {
         return new Response(
-          JSON.stringify({ success: false, error: `Gagal menyimpan pilihan divisi: ${updateErr.message}` }),
+          JSON.stringify({ success: false, error: `Gagal memperbarui status pendaftar: ${updateErr.message}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -914,7 +1012,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({
           success: true,
           message: "Pilihan divisi berhasil disimpan permanen.",
-          data: updatedRecord,
+          data: formatApplicantRecord(updatedApp),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

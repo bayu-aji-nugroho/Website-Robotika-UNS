@@ -159,7 +159,7 @@ export function useRegistrationForm() {
         primaryReason: record.primary_reason || "",
         secondaryReason: record.secondary_reason || "",
         fileName: record.cv_file_name || "cv.pdf",
-        fileSizeFormatted: formatFileSize(record.cv_file_size_bytes || 0),
+        fileSizeFormatted: record.cv_file_size_bytes ? formatFileSize(record.cv_file_size_bytes) : "< 1.0 MB (Lolos Validasi)",
         submittedAt: record.submitted_at
           ? new Date(record.submitted_at).toLocaleDateString("id-ID", {
               day: "numeric",

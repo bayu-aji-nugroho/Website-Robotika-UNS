@@ -57,9 +57,11 @@ export const RegistrationRequirementsSection: React.FC<RegistrationRequirementsS
             {content.header.stepText}
           </span>
         </div>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-          {content.header.description}
-        </p>
+        {content.header.description && (
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+            {content.header.description}
+          </p>
+        )}
       </div>
 
       <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/60 divide-y divide-zinc-200/70 dark:divide-zinc-700 overflow-hidden">

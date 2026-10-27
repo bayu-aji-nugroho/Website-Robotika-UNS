@@ -13,7 +13,7 @@ import { ADMIN_WA_CONFIG } from "@/data/registration";
 import { ExternalLink } from "lucide-react";
 
 export interface AdminWhatsAppButtonProps {
-  variant?: "card" | "button";
+  variant?: "card" | "button" | "outline";
   customMessage?: string;
   className?: string;
   label?: string;
@@ -38,7 +38,7 @@ export const AdminWhatsAppButton: React.FC<AdminWhatsAppButtonProps> = ({
               <WhatsAppIcon className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 font-[family-name:var(--font-space-grotesk)]">
+              <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 font-['League_Spartan',sans-serif]">
                 Punya pertanyaan seputar pendaftaran?
               </h3>
               <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -59,6 +59,20 @@ export const AdminWhatsAppButton: React.FC<AdminWhatsAppButtonProps> = ({
           </a>
         </div>
       </div>
+    );
+  }
+
+  if (variant === "outline") {
+    return (
+      <a
+        href={waUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 text-xs sm:text-sm font-medium transition-colors shadow-2xs cursor-pointer ${className}`}
+      >
+        <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
+        <span>{label || "Tanya Admin via WhatsApp"}</span>
+      </a>
     );
   }
 
