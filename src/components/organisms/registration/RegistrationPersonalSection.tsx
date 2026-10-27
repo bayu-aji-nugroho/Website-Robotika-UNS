@@ -11,11 +11,12 @@ import React from "react";
 import { Input, Select, Button } from "@/src/components/atoms";
 import { FormField } from "@/src/components/molecules";
 import { ArrowLeft, ArrowRight, AlertCircle, Loader2, Lock } from "lucide-react";
-import { getFacultyFromNim } from "@/src/services";
+import { getFacultyOptions, getProdiOptions } from "@/src/services";
 
 export interface RegistrationPersonalSectionProps {
   fullName: string;
   nim: string;
+  fakultas: string;
   prodi: string;
   angkatan: string;
   whatsapp: string;
@@ -24,6 +25,7 @@ export interface RegistrationPersonalSectionProps {
   isLocked?: boolean;
   onFullNameChange: (val: string) => void;
   onNimChange: (val: string) => void;
+  onFakultasChange: (val: string) => void;
   onProdiChange: (val: string) => void;
   onAngkatanChange: (val: string) => void;
   onWhatsappChange: (val: string) => void;
@@ -34,6 +36,7 @@ export interface RegistrationPersonalSectionProps {
 export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionProps> = ({
   fullName,
   nim,
+  fakultas,
   prodi,
   angkatan,
   whatsapp,
@@ -42,17 +45,18 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
   isLocked = false,
   onFullNameChange,
   onNimChange,
+  onFakultasChange,
   onProdiChange,
   onAngkatanChange,
   onWhatsappChange,
   onPrev,
   onNext,
 }) => {
-  const detectedFaculty = nim.trim() ? getFacultyFromNim(nim) : null;
-  const facultyHelper =
-    detectedFaculty && detectedFaculty !== "-"
-      ? `Fakultas terdeteksi: ${detectedFaculty}`
-      : undefined;
+  const facultyOptions = getFacultyOptions();
+  const prodiOptions = getProdiOptions(fakultas);
+  // Data lama yang tersimpan (terkunci) bisa saja tidak ada di daftar; tetap tampilkan nilainya
+  const showStoredFaculty = Boolean(fakultas) && !facultyOptions.includes(fakultas);
+  const showStoredProdi = Boolean(prodi) && !prodiOptions.some((p) => p.name === prodi);
 
   const isDisabled = isSaving || isLocked;
 
@@ -127,7 +131,7 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
           htmlFor="reg-nim"
           required
           error={errors.nim}
-          helperText={facultyHelper || "Format NIM UNS diawali kode fakultas"}
+          helperText="Format NIM UNS diawali kode fakultas"
         >
           <Input
             id="reg-nim"
@@ -161,20 +165,52 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
         </FormField>
 
         <FormField
-          label="Program Studi"
+          label="Fakultas"
+          htmlFor="reg-fakultas"
+          required
+          error={errors.fakultas}
+          className="sm:col-span-2"
+        >
+          <Select
+            id="reg-fakultas"
+            value={fakultas}
+            onChange={(e) => onFakultasChange(e.target.value)}
+            error={!!errors.fakultas}
+            disabled={isDisabled}
+          >
+            <option value="" disabled>-- Pilih Fakultas --</option>
+            {showStoredFaculty && <option value={fakultas}>{fakultas}</option>}
+            {facultyOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+
+        <FormField
+          label="Program Studi / Jurusan"
           htmlFor="reg-prodi"
           required
           error={errors.prodi}
+          helperText={!fakultas ? "Pilih fakultas terlebih dahulu" : undefined}
           className="sm:col-span-2"
         >
-          <Input
+          <Select
             id="reg-prodi"
-            type="text"
             value={prodi}
             onChange={(e) => onProdiChange(e.target.value)}
             error={!!errors.prodi}
-            disabled={isDisabled}
-          />
+            disabled={isDisabled || !fakultas}
+          >
+            <option value="" disabled>-- Pilih Program Studi --</option>
+            {showStoredProdi && <option value={prodi}>{prodi}</option>}
+            {prodiOptions.map((p) => (
+              <option key={p.id} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
         </FormField>
 
         <FormField

@@ -5,6 +5,7 @@ export type RegistrationStatus = "draft" | "submitted";
 export interface RegistrationFormInput {
   fullName: string;
   nim: string;
+  fakultas: string;
   prodi: string;
   angkatan: string;
   whatsapp: string;
@@ -22,6 +23,7 @@ export interface RegistrationFormInput {
 export interface Step3IdentityInput {
   fullName: string;
   nim: string;
+  fakultas: string;
   angkatan: string;
   prodi: string;
   whatsapp: string;

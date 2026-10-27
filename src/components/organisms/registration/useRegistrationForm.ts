@@ -19,6 +19,7 @@ import {
   getRegistrationProgress,
   RegistrationFormInput,
   getFacultyFromNim,
+  resolveFacultyName,
   generateRegistrationCode,
   SubmissionReceiptData,
   GoogleAuthUser,
@@ -53,6 +54,7 @@ export function useRegistrationForm() {
   // Step 3: Identitas
   const [fullName, setFullName] = useState<string>("");
   const [nim, setNim] = useState<string>("");
+  const [fakultas, setFakultas] = useState<string>("");
   const [prodi, setProdi] = useState<string>("");
   const [angkatan, setAngkatan] = useState<string>("");
   const [whatsapp, setWhatsapp] = useState<string>("");
@@ -117,6 +119,9 @@ export function useRegistrationForm() {
     setAgreedToRequirements(true);
     if (record.full_name) setFullName(record.full_name);
     if (record.nim) setNim(record.nim);
+    if (record.fakultas || record.prodi) {
+      setFakultas(resolveFacultyName(record.fakultas, record.prodi));
+    }
     if (record.prodi) setProdi(record.prodi);
     if (record.angkatan) setAngkatan(record.angkatan);
     if (record.whatsapp) setWhatsapp(record.whatsapp);
@@ -135,7 +140,8 @@ export function useRegistrationForm() {
 
     if (record.status === "submitted") {
       const receiptNim = record.nim || "";
-      const detectedFaculty = record.fakultas || getFacultyFromNim(receiptNim);
+      const detectedFaculty =
+        resolveFacultyName(record.fakultas, record.prodi) || getFacultyFromNim(receiptNim);
       const combinedReason = `Pilihan 1 (${record.primary_division_name || record.primary_division_id}): ${record.primary_reason || "-"}\n\nPilihan 2 (${record.secondary_division_name || record.secondary_division_id}): ${record.secondary_reason || "-"}`;
 
       const receipt: SubmissionReceiptData = {
@@ -260,6 +266,7 @@ export function useRegistrationForm() {
     const res = validateStep3Util({
       fullName,
       nim,
+      fakultas,
       prodi,
       angkatan,
       whatsapp,
@@ -301,6 +308,7 @@ export function useRegistrationForm() {
       fullName,
       nim,
       angkatan,
+      fakultas,
       prodi,
       whatsapp,
       categoryMode1,
@@ -319,6 +327,7 @@ export function useRegistrationForm() {
     fullName,
     nim,
     angkatan,
+    fakultas,
     prodi,
     whatsapp,
     categoryMode1,
@@ -424,6 +433,7 @@ export function useRegistrationForm() {
       const result = await savePermanentStep3({
         fullName,
         nim,
+        fakultas,
         angkatan,
         prodi,
         whatsapp,
@@ -599,6 +609,7 @@ export function useRegistrationForm() {
       const input: RegistrationFormInput = {
         fullName,
         nim,
+        fakultas,
         prodi,
         angkatan,
         whatsapp,
@@ -637,7 +648,7 @@ export function useRegistrationForm() {
       }
 
       const receiptNim = nim.trim().toUpperCase();
-      const detectedFaculty = getFacultyFromNim(receiptNim);
+      const detectedFaculty = fakultas.trim() || getFacultyFromNim(receiptNim);
       const combinedReason = `Pilihan 1 (${primaryDivision}): ${primaryReason.trim()}\n\nPilihan 2 (${secondaryDivision}): ${secondaryReason.trim()}`;
 
       const receipt: SubmissionReceiptData = {
@@ -685,6 +696,7 @@ export function useRegistrationForm() {
     setRequirementsError("");
     setFullName("");
     setNim("");
+    setFakultas("");
     setProdi("");
     setAngkatan("");
     setWhatsapp("");
@@ -790,6 +802,8 @@ export function useRegistrationForm() {
     setFullName,
     nim,
     setNim,
+    fakultas,
+    setFakultas,
     prodi,
     setProdi,
     angkatan,

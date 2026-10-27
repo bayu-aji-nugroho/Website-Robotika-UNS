@@ -6,6 +6,7 @@ fungsi [ Layanan pendaftaran calon anggota Robotika UNS yang terintegrasi dengan
 */
 
 import { allRegistrationDivisions } from "@/data/registration";
+import { fakultasData } from "@/data/fakultasData";
 import { supabase } from "../supabase/supabaseClient";
 import {
   RegistrationFormInput,
@@ -77,6 +78,56 @@ export function getFacultyFromNim(nim?: string | null): string {
   if (!trimmed) return "-";
   const firstLetter = trimmed.charAt(0);
   return NIM_FACULTY_MAP[firstLetter] || "-";
+}
+
+export interface FacultyProdiOption {
+  id: string;
+  name: string;
+}
+
+const FACULTIES = fakultasData as Record<
+  string,
+  { name: string; prodi: FacultyProdiOption[] }
+>;
+
+/**
+ * Daftar nama fakultas dari fakultasData (urut abjad)
+ */
+export function getFacultyOptions(): string[] {
+  return Object.values(FACULTIES)
+    .map((f) => f.name)
+    .sort((a, b) => a.localeCompare(b, "id"));
+}
+
+/**
+ * Daftar program studi (jurusan) untuk satu fakultas. Nama prodi duplikat dalam
+ * satu fakultas digabung agar tidak muncul dua kali di dropdown.
+ */
+export function getProdiOptions(facultyName: string): FacultyProdiOption[] {
+  const faculty = Object.values(FACULTIES).find((f) => f.name === facultyName);
+  if (!faculty) return [];
+  const seen = new Set<string>();
+  return faculty.prodi.filter((p) => {
+    if (seen.has(p.name)) return false;
+    seen.add(p.name);
+    return true;
+  });
+}
+
+/**
+ * Mencari nama fakultas dari data tersimpan (nama fakultas, atau nama prodi sebagai cadangan)
+ */
+export function resolveFacultyName(
+  fakultas?: string | null,
+  prodi?: string | null
+): string {
+  const all = Object.values(FACULTIES);
+  if (fakultas && all.some((f) => f.name === fakultas)) return fakultas;
+  if (prodi) {
+    const byProdi = all.find((f) => f.prodi.some((p) => p.name === prodi));
+    if (byProdi) return byProdi.name;
+  }
+  return fakultas || "";
 }
 
 /**
@@ -186,7 +237,7 @@ export async function savePermanentStep3(input: Step3IdentityInput): Promise<Sav
           const mockDraft: SupabaseRegistrationRecord = {
             full_name: input.fullName,
             nim: input.nim,
-            fakultas: getFacultyFromNim(input.nim),
+            fakultas: input.fakultas || getFacultyFromNim(input.nim),
             prodi: input.prodi,
             angkatan: input.angkatan,
             whatsapp: sanitizePhoneNumber(input.whatsapp),
@@ -373,6 +424,7 @@ export async function submitFinalRegistrationWithFile(
               current_step: 6,
               full_name: input.fullName,
               nim: input.nim,
+              fakultas: input.fakultas,
               prodi: input.prodi,
               angkatan: input.angkatan,
               whatsapp: input.whatsapp,
@@ -449,7 +501,7 @@ export function buildRegistrationPayload(
     applicant: {
       fullName: input.fullName.trim(),
       nim: input.nim.trim().toUpperCase(),
-      fakultas: getFacultyFromNim(input.nim),
+      fakultas: input.fakultas.trim() || getFacultyFromNim(input.nim),
       prodi: input.prodi.trim(),
       angkatan: input.angkatan.trim(),
       whatsapp: sanitizePhoneNumber(input.whatsapp),

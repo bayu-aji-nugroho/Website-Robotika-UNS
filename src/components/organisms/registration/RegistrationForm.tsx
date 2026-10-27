@@ -50,6 +50,8 @@ export const RegistrationForm: React.FC = () => {
     setFullName,
     nim,
     setNim,
+    fakultas,
+    setFakultas,
     prodi,
     setProdi,
     angkatan,
@@ -150,6 +152,7 @@ export const RegistrationForm: React.FC = () => {
         <RegistrationPersonalSection
           fullName={fullName}
           nim={nim}
+          fakultas={fakultas}
           prodi={prodi}
           angkatan={angkatan}
           whatsapp={whatsapp}
@@ -165,6 +168,15 @@ export const RegistrationForm: React.FC = () => {
             if (isIdentityLocked || isFullySubmitted) return;
             setNim(val);
             if (errors.nim) setErrors((prev) => ({ ...prev, nim: "" }));
+          }}
+          onFakultasChange={(val) => {
+            if (isIdentityLocked || isFullySubmitted) return;
+            setFakultas(val);
+            // Prodi bergantung pada fakultas, jadi pilihan prodi direset
+            setProdi("");
+            if (errors.fakultas || errors.prodi) {
+              setErrors((prev) => ({ ...prev, fakultas: "", prodi: "" }));
+            }
           }}
           onProdiChange={(val) => {
             if (isIdentityLocked || isFullySubmitted) return;
@@ -270,6 +282,7 @@ export const RegistrationForm: React.FC = () => {
         onConfirmSubmit={executeFinalSubmit}
         fullName={fullName}
         nim={nim}
+        fakultas={fakultas}
         prodi={prodi}
         angkatan={angkatan}
         whatsapp={whatsapp}

@@ -5,7 +5,7 @@ fungsi [ Modul utilitas validasi sisi klien dan penghitungan langkah formulir pe
 -----------------------------------------------
 */
 
-import { GoogleAuthUser } from "@/src/services";
+import { GoogleAuthUser, getProdiOptions } from "@/src/services";
 import { DivisionCategory } from "./RegistrationDivisionSection";
 
 export const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1.0 MB
@@ -13,6 +13,7 @@ export const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1.0 MB
 export interface PersonalStepData {
   fullName: string;
   nim: string;
+  fakultas: string;
   prodi: string;
   angkatan: string;
   whatsapp: string;
@@ -92,8 +93,17 @@ export function validateStep3(data: PersonalStepData): {
     errors.angkatan = "Pendaftaran hanya dibuka untuk mahasiswa angkatan 2025 dan 2026";
   }
 
+  if (!data.fakultas.trim()) {
+    errors.fakultas = "Fakultas wajib dipilih";
+  }
+
   if (!data.prodi.trim()) {
-    errors.prodi = "Program studi wajib diisi";
+    errors.prodi = "Program studi wajib dipilih";
+  } else if (
+    data.fakultas.trim() &&
+    !getProdiOptions(data.fakultas).some((p) => p.name === data.prodi)
+  ) {
+    errors.prodi = "Program studi tidak sesuai dengan fakultas yang dipilih";
   }
 
   const cleanWa = data.whatsapp.trim().replace(/[-\s]/g, "");
@@ -184,6 +194,7 @@ export interface MaxReachableStepInput {
   fullName: string;
   nim: string;
   angkatan: string;
+  fakultas: string;
   prodi: string;
   whatsapp: string;
   categoryMode1: DivisionCategory;
@@ -213,6 +224,7 @@ export function calculateMaxReachableStep(input: MaxReachableStepInput): number 
     Boolean(input.nim.trim()) &&
     input.nim.trim().length >= 7 &&
     (input.angkatan === "2025" || input.angkatan === "2026") &&
+    Boolean(input.fakultas.trim()) &&
     Boolean(input.prodi.trim()) &&
     Boolean(cleanWa) &&
     /^[0-9+]{9,15}$/.test(cleanWa);

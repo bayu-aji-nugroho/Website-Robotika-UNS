@@ -24,6 +24,7 @@ export interface RegistrationConfirmModalsProps {
   onConfirmSubmit: () => void;
   fullName: string;
   nim: string;
+  fakultas: string;
   prodi: string;
   angkatan: string;
   whatsapp: string;
@@ -45,6 +46,7 @@ export const RegistrationConfirmModals: React.FC<RegistrationConfirmModalsProps>
   onConfirmSubmit,
   fullName,
   nim,
+  fakultas,
   prodi,
   angkatan,
   whatsapp,
@@ -70,6 +72,7 @@ export const RegistrationConfirmModals: React.FC<RegistrationConfirmModalsProps>
         details={[
           { label: "Nama Lengkap", value: fullName },
           { label: "NIM", value: nim },
+          { label: "Fakultas", value: fakultas },
           { label: "Program Studi", value: prodi },
           { label: "Tahun Angkatan", value: angkatan },
           { label: "Nomor WhatsApp", value: whatsapp },
