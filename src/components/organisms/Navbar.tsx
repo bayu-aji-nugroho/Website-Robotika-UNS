@@ -88,6 +88,13 @@ export const Navbar: React.FC = () => {
             <NavLinks />
             <div className="flex items-center gap-2.5">
               <Link
+                href="/pengumuman"
+                className="px-3 py-1.5 text-xs font-semibold text-[#3f3f46] hover:text-[#18181b] dark:text-zinc-300 dark:hover:text-white transition-colors"
+              >
+                Hasil Seleksi
+              </Link>
+
+              <Link
                 href="/register"
                 className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] rounded-md transition-colors shadow-xs"
               >
@@ -128,6 +135,14 @@ export const Navbar: React.FC = () => {
             />
 
             <div className="pt-3 border-t border-[#e4e4e7] dark:border-zinc-800 space-y-2">
+              <Link
+                href="/pengumuman"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-center py-2 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-800 rounded-md transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              >
+                Hasil Seleksi
+              </Link>
+
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}

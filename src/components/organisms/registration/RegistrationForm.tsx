@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ RegistrationForm.tsx ] 
-fungsi [ Komponen container utama formulir pendaftaran 6 langkah: Syarat -> Akun Google -> Identitas -> Divisi -> Berkas CV -> Selesai. Menerapkan aturan immutability: data yang sudah disimpan terkunci permanen dan tidak dapat diubah lagi. ]
+fungsi [ Komponen container utama formulir pendaftaran 6 langkah: Syarat -> Akun Google -> Identitas -> Divisi -> Upload Berkas -> Selesai. Menerapkan aturan immutability: data yang sudah disimpan terkunci permanen dan tidak dapat diubah lagi. ]
 -----------------------------------------------
 */
 
@@ -59,7 +59,6 @@ export const RegistrationForm: React.FC = () => {
     whatsapp,
     setWhatsapp,
     handleNextFromStep3,
-    executeSaveStep3,
     categoryMode1,
     primaryDivision,
     primaryReason,
@@ -73,9 +72,13 @@ export const RegistrationForm: React.FC = () => {
     handlePrimaryDivisionChange,
     handleSecondaryDivisionChange,
     handleNextFromStep4,
-    executeSaveStep4,
     cvFile,
     fileError,
+    twibbonUrl,
+    setTwibbonUrl,
+    portfolioUrl,
+    setPortfolioUrl,
+    isMediaSelected,
     cvAgreement,
     setCvAgreement,
     handleFileSelect,
@@ -115,14 +118,6 @@ export const RegistrationForm: React.FC = () => {
       {/* Langkah 1: Syarat Masuk */}
       {currentStep === 1 && (
         <RegistrationRequirementsSection
-          agreed={agreedToRequirements}
-          error={requirementsError}
-          isLocked={isFullySubmitted}
-          onAgreeChange={(val) => {
-            if (isFullySubmitted) return;
-            setAgreedToRequirements(val);
-            if (val) setRequirementsError("");
-          }}
           onNext={handleNextFromStep1}
         />
       )}
@@ -235,11 +230,16 @@ export const RegistrationForm: React.FC = () => {
         />
       )}
 
-      {/* Langkah 5: Unggah Berkas CV */}
+      {/* Langkah 5: Upload Berkas */}
       {currentStep === 5 && (
         <RegistrationCvSection
           file={cvFile}
           error={fileError || errors.cvFile}
+          twibbonUrl={twibbonUrl}
+          twibbonError={errors.twibbonUrl}
+          portfolioUrl={portfolioUrl}
+          portfolioError={errors.portfolioUrl}
+          isMediaSelected={isMediaSelected}
           agreement={cvAgreement}
           agreementError={errors.cvAgreement}
           isSubmitting={isSubmitting}
@@ -247,6 +247,16 @@ export const RegistrationForm: React.FC = () => {
           maxSizeBytes={MAX_FILE_SIZE}
           onFileSelect={handleFileSelect}
           onFileRemove={handleFileRemove}
+          onTwibbonUrlChange={(val) => {
+            if (isFullySubmitted) return;
+            setTwibbonUrl(val);
+            if (errors.twibbonUrl) setErrors((prev) => ({ ...prev, twibbonUrl: "" }));
+          }}
+          onPortfolioUrlChange={(val) => {
+            if (isFullySubmitted) return;
+            setPortfolioUrl(val);
+            if (errors.portfolioUrl) setErrors((prev) => ({ ...prev, portfolioUrl: "" }));
+          }}
           onAgreementChange={(val) => {
             if (isFullySubmitted) return;
             setCvAgreement(val);
@@ -268,17 +278,18 @@ export const RegistrationForm: React.FC = () => {
         />
       )}
 
-      {/* Kartu Bantuan WhatsApp Panitia Khusus Langkah 1-5 (Sebelum Finalisasi) */}
-      {currentStep < 6 && <AdminWhatsAppButton variant="card" />}
+      {/* Tombol Bantuan Hubungi Admin Khusus Langkah 1-5 (Sebelum Finalisasi) */}
+      {currentStep < 6 && (
+        <div className="flex items-center justify-center pt-1 print:hidden">
+          <AdminWhatsAppButton variant="button" label="Hubungi Admin" />
+        </div>
+      )}
 
-      {/* Modal Dialog Konfirmasi Simpan Permanen & Finalisasi */}
+      {/* Modal Dialog Konfirmasi Simpan Permanen (Setelah Tahap 5: Unggah CV) */}
       <RegistrationConfirmModals
         confirmModalType={confirmModalType}
-        isSavingStep={isSavingStep}
         isSubmitting={isSubmitting}
         onClose={() => setConfirmModalType(null)}
-        onConfirmStep3={executeSaveStep3}
-        onConfirmStep4={executeSaveStep4}
         onConfirmSubmit={executeFinalSubmit}
         fullName={fullName}
         nim={nim}
@@ -291,6 +302,8 @@ export const RegistrationForm: React.FC = () => {
         categoryMode2={categoryMode2}
         secondaryDivision={secondaryDivision}
         cvFile={cvFile}
+        twibbonUrl={twibbonUrl}
+        portfolioUrl={portfolioUrl}
         getDivisionName={getDivisionName}
       />
     </div>

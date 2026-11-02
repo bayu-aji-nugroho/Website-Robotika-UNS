@@ -9,8 +9,8 @@ fungsi [ Komponen tampilan konfirmasi pendaftaran berformat tanda terima resmi a
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Printer, Copy, Check, FileText, ArrowLeft } from "lucide-react";
-import { getFacultyFromNim, SubmissionReceiptData } from "@/src/services";
+import { Copy, Check, FileText, ArrowLeft, ExternalLink, Link2 } from "lucide-react";
+import { SubmissionReceiptData } from "@/src/services";
 import { WhatsAppIcon } from "@/src/components/atoms";
 import { ADMIN_WA_CONFIG } from "@/data/registration";
 
@@ -37,24 +37,13 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
     }
   };
 
-  const detectedFaculty = data.fakultas || data.faculty || getFacultyFromNim(data.nim);
+  const detectedFaculty = data.fakultas || data.faculty || "-";
 
   return (
     <div className="space-y-4 sm:space-y-5 max-w-3xl mx-auto">
       {/* 1. Bagian Petunjuk Langkah Selanjutnya & Tautan Komunikasi WhatsApp (Di Posisi Teratas) */}
-      <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-3.5 print:hidden shadow-xs transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-[#25D366] shrink-0">
-            <WhatsAppIcon className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100 font-[family-name:var(--font-space-grotesk)] tracking-tight">
-              Wajib Masuk Grup WhatsApp Calon Anggota
-            </h2>
-          </div>
-        </div>
-
-        <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+      <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 print:hidden shadow-xs transition-colors">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           <a
             href={waGroupUrl}
             target="_blank"
@@ -173,13 +162,6 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
                   {data.whatsapp}
                 </dd>
               </div>
-
-              <div>
-                <dt className="text-zinc-500 dark:text-zinc-400 text-xs">Alamat Email Mahasiswa</dt>
-                <dd className="font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">
-                  {data.email || "Terdaftar via Google SSO"}
-                </dd>
-              </div>
             </dl>
           </div>
 
@@ -191,7 +173,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 sm:p-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
                 <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 block">
-                  Pilihan Pertama (Utama)
+                  Pilihan Pertama
                 </span>
                 <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                   {data.primaryDivision}
@@ -200,7 +182,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
 
               <div className="p-3 sm:p-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
                 <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 block">
-                  Pilihan Kedua (Alternatif)
+                  Pilihan Kedua
                 </span>
                 <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                   {data.secondaryDivision || "Tidak memilih pilihan kedua"}
@@ -209,24 +191,58 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
             </div>
           </div>
 
-          {/* Kelompok Berkas Terlampir */}
-          {data.fileName && (
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3 font-[family-name:var(--font-space-grotesk)]">
-                Dokumen Terlampir
-              </h2>
-              <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
-                <FileText className="w-4 h-4 text-[#B22234] shrink-0" />
-                <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                  {data.fileName}
-                </span>
-                {data.fileSizeFormatted && (
-                  <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px] shrink-0">
-                    ({data.fileSizeFormatted})
-                  </span>
+          {/* Kelompok Berkas & Tautan Terlampir */}
+          {(data.fileName || data.twibbonUrl || data.portfolioUrl) && (
+            <div className="space-y-2">
+                {data.fileName && (
+                  <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
+                    <FileText className="w-4 h-4 text-[#B22234] shrink-0" />
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                      {data.fileName}
+                    </span>
+                  </div>
+                )}
+                {data.twibbonUrl && (
+                  <div className="flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link2 className="w-4 h-4 text-[#B22234] shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">Bukti Upload Twibbon</p>
+                        <p className="text-zinc-500 dark:text-zinc-400 font-mono text-[10px] sm:text-[11px] truncate">{data.twibbonUrl}</p>
+                      </div>
+                    </div>
+                    <a
+                      href={data.twibbonUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-3 py-1.5 rounded-md bg-[#B22234] hover:bg-[#8B0000] transition-colors shrink-0 shadow-xs cursor-pointer"
+                    >
+                      <span>Buka</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+                {data.portfolioUrl && (
+                  <div className="flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link2 className="w-4 h-4 text-[#B22234] shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">Portofolio Karya</p>
+                        <p className="text-zinc-500 dark:text-zinc-400 font-mono text-[10px] sm:text-[11px] truncate">{data.portfolioUrl}</p>
+                      </div>
+                    </div>
+                    <a
+                      href={data.portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-3 py-1.5 rounded-md bg-[#B22234] hover:bg-[#8B0000] transition-colors shrink-0 shadow-xs cursor-pointer"
+                    >
+                      <span>Buka</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 )}
               </div>
-            </div>
           )}
 
         </div>
@@ -237,10 +253,9 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
         <button
           type="button"
           onClick={() => window.print()}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
         >
-          <Printer className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
-          <span>Cetak / Simpan Tanda Terima (PDF)</span>
+          <span>Cetak</span>
         </button>
 
         <Link

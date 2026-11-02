@@ -9,7 +9,7 @@ fungsi [ Komponen modal pop-up konfirmasi simpan permanen untuk memastikan data 
 
 import React, { useEffect } from "react";
 import { Button } from "@/src/components/atoms";
-import { AlertTriangle, Lock, Loader2, X } from "lucide-react";
+import { AlertTriangle, Loader2, X } from "lucide-react";
 
 export interface ConfirmationDetailItem {
   label: string;
@@ -73,17 +73,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-900/40">
-              <Lock className="w-5 h-5" />
-            </div>
-            <h3
-              id="confirm-modal-title"
-              className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]"
-            >
-              {title}
-            </h3>
-          </div>
+          <h3
+            id="confirm-modal-title"
+            className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]"
+          >
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onCancel}
@@ -116,17 +111,20 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
           {/* Summary / Preview Data */}
           {details && details.length > 0 && (
-            <div className="p-3.5 sm:p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
-              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block font-mono">
-                Ringkasan Data:
+            <div className="p-3.5 sm:p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5">
+              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                Ringkasan Pendaftaran
               </span>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5 text-xs">
                 {details.map((item, idx) => (
-                  <div key={idx} className="space-y-0.5">
-                    <dt className="text-zinc-500 dark:text-zinc-400 font-mono text-[10px] uppercase">
+                  <div key={idx} className="space-y-0.5 min-w-0">
+                    <dt className="text-zinc-400 dark:text-zinc-500 text-[11px] font-medium">
                       {item.label}
                     </dt>
-                    <dd className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                    <dd
+                      className="font-semibold text-zinc-900 dark:text-zinc-100 truncate text-xs sm:text-[13px]"
+                      title={typeof item.value === "string" ? item.value : undefined}
+                    >
                       {item.value}
                     </dd>
                   </div>
@@ -159,9 +157,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             icon={
               isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Lock className="w-4 h-4" />
-              )
+              ) : undefined
             }
             iconPosition="right"
           >

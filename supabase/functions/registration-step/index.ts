@@ -66,6 +66,261 @@ function generateRegCode(prefix = "ROB-UNS-2026"): string {
 const CV_SIGNED_URL_EXPIRES_IN = 20 * 60; // 20 menit sesuai UU PDP & Zero Trust
 
 // ==============================================================================
+// 1b. Pengecekan Keamanan Berkas CV (Anti .exe, Double Extension, Polyglot, Magic Bytes)
+// ==============================================================================
+const FORBIDDEN_CV_EXTENSIONS = new Set([
+  "exe", "dll", "com", "bat", "cmd", "scr", "pif", "hta", "cpl", "jar",
+  "vbs", "vbe", "js", "jse", "wsf", "wsh", "ps1", "ps1xml", "ps2", "ps2xml",
+  "psc1", "psc2", "msh", "msh1", "msh2", "mshxml", "msh1xml", "msh2xml",
+  "sh", "bash", "bin", "elf", "apk", "app", "msi", "msp", "gadget", "reg",
+  "action", "command", "run", "py", "php", "pl", "cgi", "iso", "img", "dmg",
+  "vhd", "vmdk", "sys", "drv", "ocx", "class", "vb", "vba", "ws", "sct",
+  "zip", "rar", "7z", "tar", "gz"
+]);
+
+interface CvValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+function validateCvFileSecurity(file: File, fileBuffer: ArrayBuffer): CvValidationResult {
+  const fileName = (file.name || "").trim();
+
+  // 1. Validasi karakter manipulasi pada nama berkas (null bytes, control characters, path traversal)
+  if (/[\x00-\x1F\x7F]/.test(fileName) || fileName.includes("%00") || fileName.includes("\0") || fileName.includes("..")) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Nama berkas mengandung karakter terlarang, path traversal, atau null byte.",
+    };
+  }
+
+  // 2. Deteksi Unicode Right-To-Left Override (RLO) dan directional markers yang kerap dipakai menyamarkan ekstensi .exe
+  if (/[\u202A-\u202E\u2066-\u2069]/.test(fileName)) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Terdeteksi karakter penyembunyi ekstensi (Unicode direction spoofing).",
+    };
+  }
+
+  // 3. Validasi Ekstensi Utama (Wajib .pdf)
+  const lowerName = fileName.toLowerCase();
+  if (!lowerName.endsWith(".pdf")) {
+    return {
+      isValid: false,
+      error: "Format berkas tidak didukung. Berkas CV wajib dalam format dokumen PDF murni (.pdf).",
+    };
+  }
+
+  // 4. Deteksi Serangan Double Extension / Ekstensi Berbahaya Tersembunyi (contoh: cv.exe.pdf, cv.bat.pdf)
+  const nameParts = lowerName.split(".");
+  if (nameParts.length < 2) {
+    return {
+      isValid: false,
+      error: "Format nama berkas tidak valid.",
+    };
+  }
+
+  for (let i = 1; i < nameParts.length - 1; i++) {
+    const part = nameParts[i].trim();
+    if (FORBIDDEN_CV_EXTENSIONS.has(part)) {
+      return {
+        isValid: false,
+        error: `Keamanan berkas terancam: Terdeteksi ekstensi berbahaya tersembunyi (".${part}"). Berkas CV harus berupa dokumen PDF asli dan bukan program eksekusi.`,
+      };
+    }
+  }
+
+  // 5. Pengecekan MIME Type
+  if (file.type) {
+    const lowerType = file.type.toLowerCase().trim();
+    const disallowedTypes = [
+      "application/x-msdownload",
+      "application/x-executable",
+      "application/x-dosexec",
+      "application/x-bat",
+      "application/x-sh",
+      "application/x-php",
+      "text/javascript",
+      "application/javascript",
+      "application/x-zip-compressed",
+    ];
+    if (disallowedTypes.some((t) => lowerType.includes(t))) {
+      return {
+        isValid: false,
+        error: "Keamanan berkas terancam: Tipe konten berkas mengindikasikan program eksekusi atau skrip berbahaya.",
+      };
+    }
+    if (lowerType !== "application/pdf" && lowerType !== "application/x-pdf") {
+      return {
+        isValid: false,
+        error: `Tipe MIME berkas bukan PDF resmi (terdeteksi: ${file.type}).`,
+      };
+    }
+  }
+
+  // 6. Validasi Binary Buffer
+  const bytes = new Uint8Array(fileBuffer);
+  if (bytes.length < 16) {
+    return {
+      isValid: false,
+      error: "Ukuran berkas terlalu kecil untuk dokumen PDF yang sah.",
+    };
+  }
+
+  // 6a. Deteksi Tanda Tangan Berkas Eksekusi Windows (MZ / ZM)
+  if ((bytes[0] === 0x4D && bytes[1] === 0x5A) || (bytes[0] === 0x5A && bytes[1] === 0x4D)) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai program eksekusi Windows (.exe/.dll) yang disamarkan.",
+    };
+  }
+
+  // 6b. Deteksi Tanda Tangan Berkas Eksekusi Linux (ELF binary: \x7FELF)
+  if (bytes[0] === 0x7F && bytes[1] === 0x45 && bytes[2] === 0x4C && bytes[3] === 0x46) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai biner eksekusi Linux (ELF binary).",
+    };
+  }
+
+  // 6c. Deteksi Tanda Tangan Berkas Eksekusi macOS (Mach-O) & Java (.class)
+  const isMachO =
+    (bytes[0] === 0xFE && bytes[1] === 0xED && bytes[2] === 0xFA && (bytes[3] === 0xCE || bytes[3] === 0xCF)) ||
+    (bytes[0] === 0xCE && bytes[1] === 0xFA && bytes[2] === 0xED && bytes[3] === 0xFE) ||
+    (bytes[0] === 0xCF && bytes[1] === 0xFA && bytes[2] === 0xED && bytes[3] === 0xFE) ||
+    (bytes[0] === 0xCA && bytes[1] === 0xFE && bytes[2] === 0xBA && bytes[3] === 0xBE);
+  if (isMachO) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai program eksekusi macOS atau bytecode Java.",
+    };
+  }
+
+  // 6d. Deteksi Skrip Shell (Shebang #!)
+  if (bytes[0] === 0x23 && bytes[1] === 0x21) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai skrip executable (shebang script).",
+    };
+  }
+
+  // 6e. Deteksi Arsip Zip / RAR / 7z yang disamarkan
+  if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai arsip ZIP/kontainer berkas yang disamarkan.",
+    };
+  }
+  if (bytes[0] === 0x52 && bytes[1] === 0x61 && bytes[2] === 0x72 && bytes[3] === 0x21) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai arsip RAR yang disamarkan.",
+    };
+  }
+  if (bytes[0] === 0x37 && bytes[1] === 0x7A && bytes[2] === 0xBC && bytes[3] === 0xAF && bytes[4] === 0x27 && bytes[5] === 0x1C) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Berkas terdeteksi sebagai arsip 7-Zip yang disamarkan.",
+    };
+  }
+
+  // 6f. Validasi Magic Byte PDF Murni (%PDF-)
+  const isPdfHeader =
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2D;
+
+  if (!isPdfHeader) {
+    return {
+      isValid: false,
+      error: "Integritas berkas gagal: Header berkas bukan dokumen PDF yang sah (Magic bytes tidak sesuai).",
+    };
+  }
+
+  // 6g. Validasi Standar Versi PDF (%PDF-1.x atau %PDF-2.x)
+  const versionPrefix = String.fromCharCode(bytes[5], bytes[6]);
+  if (versionPrefix !== "1." && versionPrefix !== "2.") {
+    return {
+      isValid: false,
+      error: "Integritas berkas gagal: Versi format standar PDF tidak dikenali.",
+    };
+  }
+
+  // 7. Deep Scanning Konten Teks Binary (Deteksi Polyglot Executable & DOS Stub)
+  let textContent = "";
+  try {
+    textContent = new TextDecoder("latin1").decode(bytes);
+  } catch {
+    const limit = Math.min(bytes.length, 1048576);
+    let str = "";
+    for (let i = 0; i < limit; i++) {
+      str += String.fromCharCode(bytes[i]);
+    }
+    textContent = str;
+  }
+
+  // 7a. DOS Stub Detection: Dokumen PDF resmi TIDAK PERNAH memiliki string stub Windows DOS
+  if (
+    textContent.includes("This program cannot be run in DOS mode") ||
+    textContent.includes("This program must be run under Win32")
+  ) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Terdeteksi DOS Stub program eksekusi Windows (.exe) tersembunyi di dalam berkas.",
+    };
+  }
+
+  // 7b. Deteksi PE Header Signature (PE\0\0)
+  if (textContent.includes("PE\0\0")) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Terdeteksi tanda tangan Portable Executable (PE Header) di dalam berkas.",
+    };
+  }
+
+  // 7c. Deteksi Action Berbahaya pada PDF (/Launch action yang memicu eksekusi berkas eksternal)
+  if (/\/Launch\s*[\/<\[\(\{]/.test(textContent)) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Terdeteksi perintah eksekusi aplikasi eksternal (/Launch action) di dalam dokumen PDF.",
+    };
+  }
+
+  // 7d. Deteksi Embedded Executable Files dalam PDF Streams
+  const suspiciousEmbedded = /\.(exe|dll|bat|cmd|scr|pif|vbs|js|ps1|sh|bin|hta|msi)\b/i;
+  if (textContent.includes("/EmbeddedFiles") && suspiciousEmbedded.test(textContent)) {
+    return {
+      isValid: false,
+      error: "Keamanan berkas terancam: Terdeteksi berkas program eksekusi yang disematkan di dalam PDF.",
+    };
+  }
+
+  // 8. Validasi Penutup Dokumen PDF (%%EOF)
+  // Spesifikasi ISO 32000-1 mewajibkan penanda %%EOF pada blok akhir berkas (2048 byte terakhir)
+  const tailLength = Math.min(bytes.length, 2048);
+  const tailBytes = bytes.slice(bytes.length - tailLength);
+  let tailText = "";
+  try {
+    tailText = new TextDecoder("latin1").decode(tailBytes);
+  } catch {
+    for (let i = 0; i < tailBytes.length; i++) {
+      tailText += String.fromCharCode(tailBytes[i]);
+    }
+  }
+
+  if (!tailText.includes("%%EOF")) {
+    return {
+      isValid: false,
+      error: "Integritas berkas gagal: Dokumen PDF tidak lengkap atau penanda akhir berkas (%%EOF) tidak ditemukan.",
+    };
+  }
+
+  return { isValid: true };
+}
+
+// ==============================================================================
 // 2. Konfigurasi Keamanan: Rate Limiter In-Memory Sliding Window
 // ==============================================================================
 interface RateLimitRecord {
@@ -170,7 +425,8 @@ interface ApplicantRawRecord {
   cv_file_size_bytes?: number | null;
   cv_file_url?: string | null;
   cv_storage_path?: string | null;
-  agreed_requirements?: boolean;
+  twibbon_url?: string | null;
+  portfolio_url?: string | null;
   agreed_truth?: boolean;
   submitted_at?: string | null;
   created_at?: string;
@@ -334,33 +590,69 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Validasi Ekstensi File
-      const lowerName = file.name.toLowerCase();
-      if (!lowerName.endsWith(".pdf")) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Format berkas tidak didukung. Berkas CV wajib dalam format PDF (.pdf)." }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Validasi Magic Byte (%PDF- = 0x25 0x50 0x44 0x46)
+      // Validasi Mendalam Integritas, Ekstensi & Keamanan Berkas CV (Anti Disguised .exe, Double Extension, Magic Bytes)
       const fileBuffer = await file.arrayBuffer();
-      const headerBytes = new Uint8Array(fileBuffer.slice(0, 4));
-      const isPdfMagic =
-        headerBytes[0] === 0x25 &&
-        headerBytes[1] === 0x50 &&
-        headerBytes[2] === 0x44 &&
-        headerBytes[3] === 0x46;
-
-      if (!isPdfMagic) {
+      const securityCheck = validateCvFileSecurity(file, fileBuffer);
+      if (!securityCheck.isValid) {
         return new Response(
-          JSON.stringify({ success: false, error: "Integritas berkas gagal: Berkas bukan dokumen PDF yang valid." }),
+          JSON.stringify({ success: false, error: securityCheck.error || "Berkas CV tidak valid atau tidak aman." }),
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Validasi Persetujuan
-      const agreedRequirements = formData.get("agreed_requirements") === "true";
+      // Validasi Input Link Twibbon & Portofolio
+      const selectedDivisions = existingApp.applicant_divisions || [];
+      const hasMediaDivision = selectedDivisions.some(
+        (d: { division_id?: string; divisions?: { name?: string } | null }) => {
+          const id = (d.division_id || "").toLowerCase();
+          const name = (d.divisions?.name || "").toLowerCase();
+          return id === "media-branding" || id.includes("media") || name.includes("media");
+        }
+      );
+
+      const twibbonUrl = (formData.get("twibbon_url") as string | null)?.trim() || "";
+      const portfolioUrl = (formData.get("portfolio_url") as string | null)?.trim() || "";
+
+      // Link twibbon wajib diisi oleh seluruh pendaftar
+      if (!twibbonUrl) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Link bukti upload twibbon wajib diisi oleh seluruh pendaftar." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Link portofolio hanya wajib bagi pendaftar yang memilih divisi Media
+      if (hasMediaDivision && !portfolioUrl) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Link portofolio wajib diisi bagi pendaftar yang memilih divisi Media." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const isValidWebUrl = (urlStr: string) => {
+        try {
+          const parsed = new URL(urlStr);
+          return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch {
+          return false;
+        }
+      };
+
+      if (twibbonUrl && !isValidWebUrl(twibbonUrl)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Format link bukti upload twibbon tidak valid. Pastikan tautan diawali dengan https:// atau http://" }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (portfolioUrl && !isValidWebUrl(portfolioUrl)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Format link portofolio tidak valid. Pastikan tautan diawali dengan https:// atau http://" }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validasi Persetujuan Keabsahan Berkas CV
       const agreedTruth = formData.get("agreed_truth") === "true";
       if (!agreedTruth) {
         return new Response(
@@ -412,7 +704,8 @@ Deno.serve(async (req: Request) => {
             current_step: 6,
             cv_file_name: file.name,
             cv_storage_path: storagePath,
-            agreed_requirements: agreedRequirements,
+            twibbon_url: twibbonUrl || null,
+            portfolio_url: portfolioUrl || null,
             agreed_truth: agreedTruth,
             submitted_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -599,7 +892,7 @@ Deno.serve(async (req: Request) => {
 
     // 3. Action: save_step_3 (Identitas Mahasiswa)
     if (action === "save_step_3") {
-      const { fullName, nim, angkatan, prodi, whatsapp } = payload || {};
+      const { fullName, nim, angkatan, fakultas: inputFakultas, prodi, whatsapp } = payload || {};
 
       // Cek apakah user sudah punya data tersimpan sebelumnya
       const { data: existingApp } = await supabaseAdmin
@@ -622,37 +915,10 @@ Deno.serve(async (req: Request) => {
       const trimmedName = (fullName || "").trim();
       const trimmedNim = (nim || "").trim().toUpperCase();
       const trimmedAngkatan = (angkatan || "").trim();
+      const trimmedFakultas = (inputFakultas || "").trim();
       const trimmedProdi = (prodi || "").trim();
       const sanitizedWa = sanitizePhone((whatsapp || "").trim());
 
-      // KETENTUAN IMMUTABILITY: Jika identitas sudah pernah disimpan, tolak jika ada perubahan!
-      if (existingApp?.full_name && existingApp?.nim) {
-        const isAltered =
-          existingApp.full_name !== trimmedName ||
-          existingApp.nim !== trimmedNim ||
-          existingApp.angkatan !== trimmedAngkatan ||
-          existingApp.prodi !== trimmedProdi;
-
-        if (isAltered) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: "Data identitas sudah tersimpan secara permanen dan TIDAK BISA diubah lagi.",
-            }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Jika data sama persis, kembalikan data yang ada tanpa modifikasi
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Data identitas sudah tersimpan permanen (Terkunci).",
-            data: formatApplicantRecord(existingApp),
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
 
       // Validasi Nama Lengkap
       if (!trimmedName) {
@@ -764,6 +1030,14 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // Validasi Fakultas
+      if (!trimmedFakultas) {
+        return new Response(
+          JSON.stringify({ success: false, field: "fakultas", error: "Fakultas wajib dipilih." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Validasi Prodi & WA
       if (!trimmedProdi || trimmedProdi.length < 3) {
         return new Response(
@@ -782,7 +1056,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const fakultas = NIM_FACULTY_MAP[firstLetter] || "-";
+      const fakultas = trimmedFakultas || NIM_FACULTY_MAP[firstLetter] || "-";
 
       // Simpan Permanen (UPSERT ke tabel applicants)
       const { data: savedRecord, error: upsertErr } = await supabaseAdmin
@@ -797,7 +1071,7 @@ Deno.serve(async (req: Request) => {
             prodi: trimmedProdi,
             angkatan: trimmedAngkatan,
             whatsapp: sanitizedWa,
-            current_step: 3,
+            current_step: Math.max(existingApp?.current_step || 1, 3),
             status: "draft",
             updated_at: new Date().toISOString(),
           },
@@ -847,7 +1121,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Data identitas berhasil disimpan permanen.",
+          message: "Data identitas berhasil disimpan.",
           data: formatApplicantRecord(savedRecord),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -887,36 +1161,6 @@ Deno.serve(async (req: Request) => {
             error: "Data pendaftaran Anda sudah berstatus terkirim (final) dan TIDAK BISA diubah lagi.",
           }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // KETENTUAN IMMUTABILITY: Jika divisi sudah pernah disimpan, tolak jika ada perubahan!
-      const existingDivs = (existingApp.applicant_divisions || []) as ApplicantDivisionRelRecord[];
-      const existingP1 = existingDivs.find((d) => d.priority === 1);
-      const existingP2 = existingDivs.find((d) => d.priority === 2);
-
-      if (existingP1 && existingP2) {
-        const isAltered =
-          existingP1.division_id !== primaryDivisionId ||
-          existingP2.division_id !== secondaryDivisionId;
-
-        if (isAltered) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: "Pilihan divisi sudah disimpan secara permanen dan TIDAK BISA diubah lagi.",
-            }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Pilihan divisi sudah tersimpan permanen (Terkunci).",
-            data: formatApplicantRecord(existingApp),
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -961,10 +1205,17 @@ Deno.serve(async (req: Request) => {
       }
 
       // Hapus data pilihan divisi lama (jika ada draft sebelumnya) lalu masukkan pilihan baru
-      await supabaseAdmin
+      const { error: deleteDivErr } = await supabaseAdmin
         .from("applicant_divisions")
         .delete()
         .eq("applicant_id", existingApp.id);
+
+      if (deleteDivErr) {
+        return new Response(
+          JSON.stringify({ success: false, error: `Gagal memperbarui relasi pilihan divisi: ${deleteDivErr.message}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       const { error: insertDivErr } = await supabaseAdmin
         .from("applicant_divisions")
@@ -994,7 +1245,7 @@ Deno.serve(async (req: Request) => {
       const { data: updatedApp, error: updateErr } = await supabaseAdmin
         .from("applicants")
         .update({
-          current_step: 4,
+          current_step: Math.max(existingApp?.current_step || 1, 4),
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id)
@@ -1011,7 +1262,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Pilihan divisi berhasil disimpan permanen.",
+          message: "Pilihan divisi berhasil disimpan.",
           data: formatApplicantRecord(updatedApp),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

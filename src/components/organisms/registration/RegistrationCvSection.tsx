@@ -1,20 +1,25 @@
 /*
 -----------------------------------------
 nama file: [ RegistrationCvSection.tsx ] 
-fungsi [ Komponen langkah kelima formulir pendaftaran untuk mengunggah dokumen Curriculum Vitae, persetujuan keabsahan data, dan tombol submit ]
+fungsi [ Komponen langkah kelima (Upload Berkas) formulir pendaftaran untuk mengunggah dokumen Curriculum Vitae, tautan twibbon (wajib bagi seluruh anggota), tautan portofolio (wajib bagi divisi Media, opsional bagi divisi lain), persetujuan keabsahan data, dan tombol submit ]
 -----------------------------------------------
 */
 
 "use client";
 
 import React from "react";
-import { FileUploadDropzone } from "@/src/components/molecules";
-import { Checkbox, ErrorMessage, Button } from "@/src/components/atoms";
-import { ArrowLeft, ArrowRight, FileText, Lock } from "lucide-react";
+import { FileUploadDropzone, FormField } from "@/src/components/molecules";
+import { Checkbox, ErrorMessage, Button, Input } from "@/src/components/atoms";
+import { ArrowLeft, ArrowRight, Lock, ExternalLink } from "lucide-react";
 
 export interface RegistrationCvSectionProps {
   file: File | null;
   error?: string | null;
+  twibbonUrl: string;
+  twibbonError?: string | null;
+  portfolioUrl: string;
+  portfolioError?: string | null;
+  isMediaSelected: boolean;
   agreement: boolean;
   agreementError?: string | null;
   isSubmitting: boolean;
@@ -22,6 +27,8 @@ export interface RegistrationCvSectionProps {
   maxSizeBytes?: number;
   onFileSelect: (file: File) => void;
   onFileRemove: () => void;
+  onTwibbonUrlChange: (val: string) => void;
+  onPortfolioUrlChange: (val: string) => void;
   onAgreementChange: (val: boolean) => void;
   onPrev: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -30,6 +37,11 @@ export interface RegistrationCvSectionProps {
 export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
   file,
   error,
+  twibbonUrl,
+  twibbonError,
+  portfolioUrl,
+  portfolioError,
+  isMediaSelected,
   agreement,
   agreementError,
   isSubmitting,
@@ -37,12 +49,14 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
   maxSizeBytes = 1024 * 1024,
   onFileSelect,
   onFileRemove,
+  onTwibbonUrlChange,
+  onPortfolioUrlChange,
   onAgreementChange,
   onPrev,
   onSubmit,
 }) => {
   return (
-    <div className="bg-white dark:bg-[#18191d] rounded-xl sm:rounded-2xl border border-zinc-200/90 dark:border-zinc-800 p-3 sm:p-5 md:p-6 space-y-3 sm:space-y-5 shadow-xs transition-colors duration-200">
+    <div className="bg-white dark:bg-[#18191d] rounded-xl sm:rounded-2xl border border-zinc-200/90 dark:border-zinc-800 p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-6 shadow-xs transition-colors duration-200">
       <div className="border-b border-zinc-100 dark:border-zinc-800 pb-2 sm:pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -50,7 +64,7 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
               5
             </span>
             <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]">
-              Unggah Berkas Curriculum Vitae (CV)
+              Upload Berkas
             </h2>
           </div>
           <span className="hidden sm:inline-block text-xs font-medium text-zinc-400 dark:text-zinc-500 shrink-0">
@@ -76,11 +90,12 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
         </div>
       )}
 
+
+      {/* Bagian 1: Berkas Dokumen CV */}
       <div className="space-y-3">
         <div className="flex items-center">
-          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-[#B22234]" />
-            <span>Dokumen CV</span>
+          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+            Dokumen Curriculum Vitae (CV)
           </span>
         </div>
 
@@ -99,6 +114,121 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
         )}
       </div>
 
+      {/* Bagian 2: Tautan Pendukung (Twibbon & Portofolio) */}
+      <div className="space-y-3.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center">
+          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+            Tautan Pendukung
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3.5 sm:gap-4">
+          {/* Input 1: Link Bukti Upload Twibbon */}
+          <FormField
+            label="Link Bukti Upload Twibbon"
+            htmlFor="reg-twibbon-url"
+            required={true}
+            sublabel="Wajib (Semua Anggota)"
+            error={twibbonError || undefined}
+          >
+            {!isLocked ? (
+              <div className="relative">
+                <Input
+                  id="reg-twibbon-url"
+                  type="url"
+                  value={twibbonUrl}
+                  onChange={(e) => onTwibbonUrlChange(e.target.value)}
+                  placeholder="https://..."
+                  error={Boolean(twibbonError)}
+                  disabled={isSubmitting}
+                  className="pr-9"
+                />
+                {twibbonUrl && (
+                  <a
+                    href={twibbonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
+                    title="Uji buka tautan"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
+                <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[80%] font-mono text-[11px] sm:text-xs">
+                  {twibbonUrl || "Tidak dicantumkan"}
+                </span>
+                {twibbonUrl && (
+                  <a
+                    href={twibbonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-2.5 py-1 rounded-md bg-[#B22234] hover:bg-[#8B0000] transition-colors ml-2 shrink-0 shadow-xs cursor-pointer"
+                  >
+                    <span>Buka Tautan</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            )}
+          </FormField>
+
+          {/* Input 2: Link Portofolio Karya */}
+          <FormField
+            label="Link Portofolio Karya"
+            htmlFor="reg-portfolio-url"
+            required={isMediaSelected}
+            sublabel={isMediaSelected ? "Wajib (Divisi Media)" : "Opsional"}
+            error={portfolioError || undefined}
+          >
+            {!isLocked ? (
+              <div className="relative">
+                <Input
+                  id="reg-portfolio-url"
+                  type="url"
+                  value={portfolioUrl}
+                  onChange={(e) => onPortfolioUrlChange(e.target.value)}
+                  placeholder="https://..."
+                  error={Boolean(portfolioError)}
+                  disabled={isSubmitting}
+                  className="pr-9"
+                />
+                {portfolioUrl && (
+                  <a
+                    href={portfolioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
+                    title="Uji buka tautan"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
+                <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[80%] font-mono text-[11px] sm:text-xs">
+                  {portfolioUrl || "Tidak dicantumkan"}
+                </span>
+                {portfolioUrl && (
+                  <a
+                    href={portfolioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-2.5 py-1 rounded-md bg-[#B22234] hover:bg-[#8B0000] transition-colors ml-2 shrink-0 shadow-xs cursor-pointer"
+                  >
+                    <span>Buka Tautan</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            )}
+          </FormField>
+        </div>
+      </div>
+
       <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
         <div className="p-4 rounded-lg bg-[#FCF2F3] dark:bg-red-950/30 border border-[#F8D7DA] dark:border-red-900/50 space-y-2">
           <Checkbox
@@ -106,7 +236,7 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
             checked={agreement || isLocked}
             disabled={isLocked}
             onChange={(e) => onAgreementChange(e.target.checked)}
-            label="Saya menyatakan bahwa data dan berkas CV yang diunggah adalah benar, serta bersedia mengikuti seluruh tahapan seleksi calon anggota Robotika UNS."
+            label="Saya menyatakan bahwa data, berkas CV, serta tautan bukti yang diunggah adalah benar, dan saya bersedia mengikuti seluruh tahapan seleksi calon anggota Robotika UNS."
             error={agreementError || undefined}
           />
           <ErrorMessage message={agreementError || undefined} />

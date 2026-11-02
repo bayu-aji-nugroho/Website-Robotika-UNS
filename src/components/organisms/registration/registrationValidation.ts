@@ -32,21 +32,28 @@ export interface CvStepData {
   cvFile: File | null;
   cvAgreement: boolean;
   maxSizeBytes?: number;
+  twibbonUrl?: string;
+  portfolioUrl?: string;
+  isMediaSelected?: boolean;
+}
+
+export function isValidWebUrl(urlString: string): boolean {
+  if (!urlString) return false;
+  try {
+    const url = new URL(urlString.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Validasi Step 1: Syarat & Ketentuan
  */
-export function validateStep1(agreedToRequirements: boolean): {
+export function validateStep1(_agreedToRequirements?: boolean): {
   isValid: boolean;
   error: string;
 } {
-  if (!agreedToRequirements) {
-    return {
-      isValid: false,
-      error: "Anda harus menyetujui seluruh kriteria pendaftaran sebelum melanjutkan",
-    };
-  }
   return { isValid: true, error: "" };
 }
 
@@ -174,6 +181,46 @@ export function validateStep5(data: CvStepData): {
     errors.cvFile = "Berkas CV wajib diunggah (format PDF, maksimal 1.0 MB)";
   } else if (data.cvFile.size > limit) {
     errors.cvFile = "Ukuran berkas CV melebihi batas 1.0 MB";
+  } else {
+    const fileName = (data.cvFile.name || "").trim();
+    const lowerName = fileName.toLowerCase();
+
+    if (
+      /[\x00-\x1F\x7F]/.test(fileName) ||
+      fileName.includes("%00") ||
+      fileName.includes("\0") ||
+      /[\u202A-\u202E\u2066-\u2069]/.test(fileName)
+    ) {
+      errors.cvFile = "Nama berkas mengandung karakter terlarang atau manipulasi ekstensi";
+    } else if (!lowerName.endsWith(".pdf")) {
+      errors.cvFile = "Berkas CV wajib berformat PDF (.pdf)";
+    } else {
+      const FORBIDDEN_EXTS = ["exe", "dll", "com", "bat", "cmd", "scr", "pif", "hta", "cpl", "jar", "vbs", "js", "ps1", "sh", "bin", "msi"];
+      const nameParts = lowerName.split(".");
+      for (let i = 1; i < nameParts.length - 1; i++) {
+        if (FORBIDDEN_EXTS.includes(nameParts[i].trim())) {
+          errors.cvFile = `Terdeteksi ekstensi berbahaya (".${nameParts[i]}"). Berkas CV harus dokumen PDF asli`;
+          break;
+        }
+      }
+    }
+  }
+
+  const trimmedTwibbon = (data.twibbonUrl || "").trim();
+  const trimmedPortfolio = (data.portfolioUrl || "").trim();
+
+  // Link twibbon wajib diisi oleh seluruh pendaftar
+  if (!trimmedTwibbon) {
+    errors.twibbonUrl = "Link bukti upload twibbon wajib diisi";
+  } else if (!isValidWebUrl(trimmedTwibbon)) {
+    errors.twibbonUrl = "Format tautan tidak valid. Gunakan format URL lengkap (contoh: https://...)";
+  }
+
+  // Link portofolio hanya wajib bagi pendaftar yang memilih divisi Media
+  if (data.isMediaSelected && !trimmedPortfolio) {
+    errors.portfolioUrl = "Link portofolio wajib diisi bagi pendaftar divisi Media";
+  } else if (trimmedPortfolio && !isValidWebUrl(trimmedPortfolio)) {
+    errors.portfolioUrl = "Format tautan tidak valid. Gunakan format URL lengkap (contoh: https://...)";
   }
 
   if (!data.cvAgreement) {
@@ -204,6 +251,9 @@ export interface MaxReachableStepInput {
   secondaryDivision: string;
   secondaryReason: string;
   cvFile: File | null;
+  twibbonUrl?: string;
+  portfolioUrl?: string;
+  isMediaSelected?: boolean;
   cvAgreement: boolean;
 }
 
@@ -213,8 +263,7 @@ export interface MaxReachableStepInput {
 export function calculateMaxReachableStep(input: MaxReachableStepInput): number {
   if (input.hasSubmissionSuccess) return 6;
 
-  if (!input.agreedToRequirements) return 1;
-
+  // Step 1 Syarat Masuk kini tanpa checkbox persetujuan, langsung lanjut ke Step 2
   if (!input.authUser) return 2;
 
   const cleanWa = input.whatsapp.trim().replace(/[-\s]/g, "");
@@ -240,9 +289,14 @@ export function calculateMaxReachableStep(input: MaxReachableStepInput): number 
     input.secondaryReason.trim().length >= 15;
   if (!isStep4Valid) return 4;
 
+  const isTwibbonValid = Boolean(input.twibbonUrl?.trim());
+  const isPortfolioValid = !input.isMediaSelected || Boolean(input.portfolioUrl?.trim());
+
   const isStep5Valid =
     input.cvFile !== null &&
     input.cvFile.size <= MAX_FILE_SIZE &&
+    isTwibbonValid &&
+    isPortfolioValid &&
     Boolean(input.cvAgreement);
   if (!isStep5Valid) return 5;
 

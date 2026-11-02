@@ -19,7 +19,12 @@ export interface NavUserMenuProps {
 
 export const NavUserMenu: React.FC<NavUserMenuProps> = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user.avatarUrl]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,14 +52,16 @@ export const NavUserMenu: React.FC<NavUserMenuProps> = ({ user, onLogout }) => {
         aria-label="Menu Akun Pengguna"
         aria-expanded={isOpen}
       >
-        {user.avatarUrl ? (
+        {user.avatarUrl && !avatarError ? (
           <Image
             src={user.avatarUrl}
-            alt={user.fullName || "Avatar"}
+            alt=""
             fill
             unoptimized
             sizes="34px"
             className="object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setAvatarError(true)}
           />
         ) : (
           <span className="text-xs font-bold leading-none select-none">{initial}</span>
@@ -65,14 +72,16 @@ export const NavUserMenu: React.FC<NavUserMenuProps> = ({ user, onLogout }) => {
         <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-white dark:bg-[#141518] border border-zinc-200/90 dark:border-zinc-800 shadow-xl p-3 z-50 text-left animate-in fade-in duration-150">
           <div className="flex items-center gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
             <div className="relative w-9 h-9 rounded-full overflow-hidden bg-[#B22234] text-white flex items-center justify-center shrink-0 text-xs font-bold">
-              {user.avatarUrl ? (
+              {user.avatarUrl && !avatarError ? (
                 <Image
                   src={user.avatarUrl}
-                  alt={user.fullName || "Avatar"}
+                  alt=""
                   fill
                   unoptimized
                   sizes="36px"
                   className="object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 initial

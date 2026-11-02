@@ -122,11 +122,18 @@ export function resolveFacultyName(
   prodi?: string | null
 ): string {
   const all = Object.values(FACULTIES);
-  if (fakultas && all.some((f) => f.name === fakultas)) return fakultas;
   if (prodi) {
     const byProdi = all.find((f) => f.prodi.some((p) => p.name === prodi));
-    if (byProdi) return byProdi.name;
+    if (byProdi) {
+      // Jika prodi ada dan terdaftar pada suatu fakultas:
+      // Apabila fakultas belum diisi atau fakultas tersimpan tidak memuat prodi ini,
+      // sinkronkan fakultas ke fakultas yang menaungi prodi tersebut
+      if (!fakultas || !all.find((f) => f.name === fakultas)?.prodi.some((p) => p.name === prodi)) {
+        return byProdi.name;
+      }
+    }
   }
+  if (fakultas && all.some((f) => f.name === fakultas)) return fakultas;
   return fakultas || "";
 }
 
@@ -237,7 +244,7 @@ export async function savePermanentStep3(input: Step3IdentityInput): Promise<Sav
           const mockDraft: SupabaseRegistrationRecord = {
             full_name: input.fullName,
             nim: input.nim,
-            fakultas: input.fakultas || getFacultyFromNim(input.nim),
+            fakultas: input.fakultas.trim(),
             prodi: input.prodi,
             angkatan: input.angkatan,
             whatsapp: sanitizePhoneNumber(input.whatsapp),
@@ -396,6 +403,8 @@ export async function submitFinalRegistrationWithFile(
     const formData = new FormData();
     formData.append("action", "submit_final");
     formData.append("cv_file", input.cvFile, input.cvFile.name);
+    formData.append("twibbon_url", input.twibbonUrl?.trim() || "");
+    formData.append("portfolio_url", input.portfolioUrl?.trim() || "");
     formData.append("agreed_requirements", String(Boolean(input.agreedToRequirements)));
     formData.append("agreed_truth", String(Boolean(input.agreedToCvTruth)));
 
@@ -434,6 +443,8 @@ export async function submitFinalRegistrationWithFile(
               secondary_division_id: input.secondaryDivisionId,
               secondary_division_category: input.categoryMode2,
               secondary_reason: input.secondaryReason,
+              twibbon_url: input.twibbonUrl?.trim() || null,
+              portfolio_url: input.portfolioUrl?.trim() || null,
               registration_code: regCode,
               agreed_requirements: input.agreedToRequirements,
               agreed_truth: input.agreedToCvTruth,
@@ -501,7 +512,7 @@ export function buildRegistrationPayload(
     applicant: {
       fullName: input.fullName.trim(),
       nim: input.nim.trim().toUpperCase(),
-      fakultas: input.fakultas.trim() || getFacultyFromNim(input.nim),
+      fakultas: input.fakultas.trim(),
       prodi: input.prodi.trim(),
       angkatan: input.angkatan.trim(),
       whatsapp: sanitizePhoneNumber(input.whatsapp),
@@ -527,6 +538,10 @@ export function buildRegistrationPayload(
       fileSizeBytes: file ? file.size : 0,
       fileSizeFormatted: file ? formatFileSize(file.size) : "0 KB",
     },
+    links: {
+      twibbonUrl: input.twibbonUrl?.trim() || "",
+      portfolioUrl: input.portfolioUrl?.trim() || "",
+    },
     consents: {
       agreedToRequirements: Boolean(input.agreedToRequirements),
       agreedToCvTruth: Boolean(input.agreedToCvTruth),
@@ -548,10 +563,7 @@ export function createRegistrationFormData(
   formData.append("registration_code", structuredPayload.registrationCode);
   formData.append("full_name", structuredPayload.applicant.fullName);
   formData.append("nim", structuredPayload.applicant.nim);
-  formData.append(
-    "fakultas",
-    structuredPayload.applicant.fakultas || getFacultyFromNim(structuredPayload.applicant.nim)
-  );
+  formData.append("fakultas", structuredPayload.applicant.fakultas || "");
   formData.append("prodi", structuredPayload.applicant.prodi);
   formData.append("angkatan", structuredPayload.applicant.angkatan);
   formData.append("whatsapp", structuredPayload.applicant.whatsapp);
@@ -563,6 +575,8 @@ export function createRegistrationFormData(
   formData.append("secondary_division_name", structuredPayload.divisions.secondary.name);
   formData.append("secondary_division_category", structuredPayload.divisions.secondary.category);
   formData.append("secondary_reason", structuredPayload.divisions.secondary.reason);
+  formData.append("twibbon_url", input.twibbonUrl?.trim() || "");
+  formData.append("portfolio_url", input.portfolioUrl?.trim() || "");
   formData.append("agreed_requirements", String(structuredPayload.consents.agreedToRequirements));
   formData.append("agreed_truth", String(structuredPayload.consents.agreedToCvTruth));
   formData.append("submitted_at", structuredPayload.metadata.submittedAt);

@@ -48,7 +48,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
           </span>
           <span className="text-zinc-300 dark:text-zinc-600 text-xs shrink-0">·</span>
           <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
-            {currentStepItem.title}
+            {currentStepItem.shortTitle || currentStepItem.title}
           </span>
         </div>
 

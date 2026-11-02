@@ -54,9 +54,9 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
 }) => {
   const facultyOptions = getFacultyOptions();
   const prodiOptions = getProdiOptions(fakultas);
-  // Data lama yang tersimpan (terkunci) bisa saja tidak ada di daftar; tetap tampilkan nilainya
-  const showStoredFaculty = Boolean(fakultas) && !facultyOptions.includes(fakultas);
-  const showStoredProdi = Boolean(prodi) && !prodiOptions.some((p) => p.name === prodi);
+  // Data lama yang tersimpan (terkunci) bisa saja tidak ada di daftar; hanya tampilkan jika status terkunci
+  const showStoredFaculty = isLocked && Boolean(fakultas) && !facultyOptions.includes(fakultas);
+  const showStoredProdi = isLocked && Boolean(prodi) && !prodiOptions.some((p) => p.name === prodi);
 
   const isDisabled = isSaving || isLocked;
 
@@ -131,7 +131,6 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
           htmlFor="reg-nim"
           required
           error={errors.nim}
-          helperText="Format NIM UNS diawali kode fakultas"
         >
           <Input
             id="reg-nim"

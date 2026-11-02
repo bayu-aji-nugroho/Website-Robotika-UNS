@@ -57,12 +57,12 @@ export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps>
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#B22234] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
             >
               <InstagramIcon />
-              <span>Instagram @uns_robotika</span>
+              <span>Instagram</span>
             </a>
 
             <AdminWhatsAppButton
               variant="outline"
-              label="WhatsApp Panitia"
+              label="WhatsApp"
               customMessage="Halo Admin OPREC UKM Robotika UNS, saya ingin bertanya mengenai jadwal pendaftaran calon anggota baru..."
             />
           </div>

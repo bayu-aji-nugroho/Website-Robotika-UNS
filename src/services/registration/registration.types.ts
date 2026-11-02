@@ -16,7 +16,9 @@ export interface RegistrationFormInput {
   secondaryDivisionId: string;
   secondaryReason: string;
   cvFile?: File | null;
-  agreedToRequirements: boolean;
+  twibbonUrl?: string;
+  portfolioUrl?: string;
+  agreedToRequirements?: boolean;
   agreedToCvTruth: boolean;
 }
 
@@ -44,7 +46,9 @@ export interface Step4DivisionInput {
 
 export interface Step5SubmitInput {
   cvFile: File;
-  agreedToRequirements: boolean;
+  twibbonUrl?: string;
+  portfolioUrl?: string;
+  agreedToRequirements?: boolean;
   agreedToCvTruth: boolean;
 }
 
@@ -91,8 +95,12 @@ export interface RegistrationPayload {
     fileSizeBytes: number;
     fileSizeFormatted: string;
   };
+  links?: {
+    twibbonUrl?: string;
+    portfolioUrl?: string;
+  };
   consents: {
-    agreedToRequirements: boolean;
+    agreedToRequirements?: boolean;
     agreedToCvTruth: boolean;
   };
   metadata: {
@@ -145,6 +153,8 @@ export interface SupabaseRegistrationRecord {
   cv_file_size_bytes?: number | null;
   cv_file_url?: string | null;
   cv_storage_path?: string | null;
+  twibbon_url?: string | null;
+  portfolio_url?: string | null;
   agreed_requirements?: boolean;
   agreed_truth?: boolean;
   submitted_at?: string | null;
@@ -186,5 +196,7 @@ export interface SubmissionReceiptData {
   secondaryReason?: string;
   fileName: string;
   fileSizeFormatted: string;
+  twibbonUrl?: string;
+  portfolioUrl?: string;
   submittedAt: string;
 }

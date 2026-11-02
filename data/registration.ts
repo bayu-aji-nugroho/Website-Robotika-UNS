@@ -72,7 +72,7 @@ export const allRegistrationDivisions: DivisionOption[] = [
 
 export interface RegistrationRequirementItem {
   title: string;
-  desc: string;
+  desc?: string;
 }
 
 export interface SelectionStageItem {
@@ -115,16 +115,10 @@ export interface RegistrationRequirementsContent {
 
 export const registrationRequirements: RegistrationRequirementItem[] = [
   {
-    title: "Mahasiswa Aktif Sarjana dan Vokasi",
-    desc: "Terdaftar sebagai mahasiswa aktif UNS jenjang Sarjana maupun Vokasi angkatan 2025 dan 2026.",
+    title: "Terdaftar sebagai mahasiswa aktif UNS jenjang Sarjana maupun Vokasi angkatan 2025 dan 2026.",
   },
   {
-    title: "Terbuka untuk Semua Program Studi",
-    desc: "Boleh mendaftar dari seluruh program studi di UNS tanpa terkecuali.",
-  },
-  {
-    title: "Batasan Keikutsertaan Organisasi",
-    desc: "Tidak mendaftar 2 UKM atau organisasi lain (maksimal hanya mengikuti 1 organisasi lain).",
+    title: "Boleh mendaftar dari seluruh program studi di UNS tanpa terkecuali.",
   },
 ];
 
@@ -158,12 +152,12 @@ export const registrationSteps: RegistrationStepItem[] = [
   },
   {
     id: 5,
-    title: "Unggah Berkas CV",
-    shortTitle: "Berkas CV",
+    title: "Upload Berkas",
+    shortTitle: "Upload Berkas",
   },
   {
     id: 6,
-    title: "Grup WA dan Tanda Terima",
+    title: "Selesai",
     shortTitle: "Selesai",
   },
 ];

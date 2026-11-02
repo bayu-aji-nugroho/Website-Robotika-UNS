@@ -7,7 +7,7 @@ fungsi [ Komponen langkah kedua formulir pendaftaran untuk autentikasi akun Goog
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/src/components/atoms";
 import {
@@ -40,6 +40,11 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [avatarError, setAvatarError] = useState<boolean>(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatarUrl]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -115,12 +120,9 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
               </svg>
             </div>
 
-            <div className="max-w-md mx-auto space-y-1.5">
-              <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 font-[family-name:var(--font-space-grotesk)]">
-                Masuk dengan Akun Google
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                Gunakan akun email SSO UNS (<code className="px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 font-mono text-xs">@student.uns.ac.id</code>) atau email Google aktif Anda.
+            <div className="max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Gunakan akun Google aktif Anda.
               </p>
             </div>
 
@@ -174,15 +176,17 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
           <div className="p-4 sm:p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="relative">
-                {user.avatarUrl ? (
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-zinc-700 shadow-xs">
+                {user.avatarUrl && !avatarError ? (
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-zinc-700 shadow-xs bg-[#B22234]">
                     <Image
                       src={user.avatarUrl}
-                      alt={user.fullName || "Avatar"}
+                      alt=""
                       fill
                       unoptimized
                       sizes="48px"
                       className="object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={() => setAvatarError(true)}
                     />
                   </div>
                 ) : (

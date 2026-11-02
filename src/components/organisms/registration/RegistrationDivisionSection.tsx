@@ -181,7 +181,7 @@ export const RegistrationDivisionSection: React.FC<RegistrationDivisionSectionPr
             rows={3}
             value={primaryReason}
             onChange={(e) => onPrimaryReasonChange(e.target.value)}
-            placeholder="Jelaskan alasan, minat, atau pengalaman Anda memilih divisi utama ini..."
+            placeholder="Jelaskan alasan, minat, atau pengalaman Anda memilih divisi pilihan 1 ini..."
             error={!!errors.primaryReason}
             disabled={isDisabled}
           />

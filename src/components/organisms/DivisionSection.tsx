@@ -84,20 +84,10 @@ export const DivisionSection: React.FC = () => {
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="h-10 w-10 rounded-lg bg-[#FCF2F3] dark:bg-red-950/40 border border-[#F8D7DA] dark:border-red-900/50 flex items-center justify-center text-[#B22234] dark:text-red-400 group-hover:bg-[#B22234] group-hover:text-white group-hover:border-[#B22234] transition-all shrink-0 mt-0.5">
-                          {getItemIcon(team.id)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-lg font-bold text-[#18181b] dark:text-zinc-100 group-hover:text-[#B22234] dark:group-hover:text-[#e03144] transition-colors leading-tight">
-                            {team.name}
-                          </h4>
-                          {team.badge && (
-                            <span className="block text-xs text-[#71717a] dark:text-zinc-400 font-normal leading-snug mt-1">
-                              {team.badge}
-                            </span>
-                          )}
-                        </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-lg font-bold text-[#18181b] dark:text-zinc-100 group-hover:text-[#B22234] dark:group-hover:text-[#e03144] transition-colors leading-tight">
+                          {team.name}
+                        </h4>
                       </div>
                       <ArrowRight className="w-4 h-4 text-[#a1a1aa] dark:text-zinc-500 group-hover:text-[#B22234] dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
                     </div>
@@ -109,9 +99,6 @@ export const DivisionSection: React.FC = () => {
 
                   <div className="flex items-center justify-between pt-4 mt-5 border-t border-[#f4f4f5] dark:border-zinc-800/80 text-xs font-semibold text-[#B22234] dark:text-red-400">
                     <span className="group-hover:underline">Buka profil tim</span>
-                    <span className="text-[11px] font-mono text-[#71717a] dark:text-zinc-400 group-hover:text-[#B22234] dark:group-hover:text-red-400 transition-colors">
-                      /divisi/{team.id}
-                    </span>
                   </div>
                 </Link>
               ))}

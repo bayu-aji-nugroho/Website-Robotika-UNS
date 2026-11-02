@@ -61,12 +61,18 @@ export const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <Link
                   href="/register"
                   className="inline-flex items-center gap-4 px-4 sm:px-6 py-2.5 sm:py-3 bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] text-white text-xs font-semibold rounded-sm transition-colors shadow-sm"
                 >
                   <span>Daftar Sekarang</span>
+                </Link>
+                <Link
+                  href="/pengumuman"
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-zinc-900 border border-[#e4e4e7] dark:border-zinc-700 hover:bg-[#f4f4f5] dark:hover:bg-zinc-800 text-[#18181b] dark:text-zinc-100 text-xs font-semibold rounded-sm transition-colors shadow-xs"
+                >
+                  <span>Hasil Seleksi</span>
                 </Link>
               </div>
             </div>

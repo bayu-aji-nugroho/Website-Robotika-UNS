@@ -18,7 +18,6 @@ import {
   savePermanentStep4,
   getRegistrationProgress,
   RegistrationFormInput,
-  getFacultyFromNim,
   resolveFacultyName,
   generateRegistrationCode,
   SubmissionReceiptData,
@@ -44,8 +43,8 @@ import {
 export function useRegistrationForm() {
   const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // Step 1: Syarat
-  const [agreedToRequirements, setAgreedToRequirements] = useState<boolean>(false);
+  // Step 1: Syarat (tanpa checkbox persetujuan, default true)
+  const [agreedToRequirements, setAgreedToRequirements] = useState<boolean>(true);
   const [requirementsError, setRequirementsError] = useState<string>("");
 
   // Step 2: Akun Google
@@ -68,10 +67,22 @@ export function useRegistrationForm() {
   const [secondaryDivision, setSecondaryDivision] = useState<string>("");
   const [secondaryReason, setSecondaryReason] = useState<string>("");
 
-  // Step 5: Berkas CV
+  // Step 5: Berkas CV & Link
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [twibbonUrl, setTwibbonUrl] = useState<string>("");
+  const [portfolioUrl, setPortfolioUrl] = useState<string>("");
   const [cvAgreement, setCvAgreement] = useState<boolean>(false);
+
+  const isMediaDivision = useCallback((divisionId?: string | null): boolean => {
+    if (!divisionId) return false;
+    const lower = divisionId.toLowerCase();
+    return lower === "media-branding" || lower.includes("media");
+  }, []);
+
+  const isMediaSelected = useMemo(() => {
+    return isMediaDivision(primaryDivision) || isMediaDivision(secondaryDivision);
+  }, [primaryDivision, secondaryDivision, isMediaDivision]);
 
   // State Form Global & Status Record Database
   const [savedRecord, setSavedRecord] = useState<SupabaseRegistrationRecord | null>(null);
@@ -90,11 +101,10 @@ export function useRegistrationForm() {
     return found ? found.name : id;
   }, []);
 
-  // KETENTUAN IMMUTABILITY: Menghitung status penguncian permanen
+  // KETENTUAN IMMUTABILITY: Penguncian permanen HANYA setelah Langkah 5 (Submit Final)
   const isFullySubmitted = savedRecord?.status === "submitted" || Boolean(submissionSuccess);
-  const isIdentityLocked = isFullySubmitted || Boolean(savedRecord?.full_name || savedRecord?.nim);
-  const isDivisionLocked =
-    isFullySubmitted || Boolean(savedRecord?.primary_division_id && savedRecord?.secondary_division_id);
+  const isIdentityLocked = isFullySubmitted;
+  const isDivisionLocked = isFullySubmitted;
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 80, behavior: "smooth" });
@@ -138,10 +148,13 @@ export function useRegistrationForm() {
     }
     if (record.secondary_reason) setSecondaryReason(record.secondary_reason);
 
+    if (record.twibbon_url) setTwibbonUrl(record.twibbon_url);
+    if (record.portfolio_url) setPortfolioUrl(record.portfolio_url);
+
     if (record.status === "submitted") {
       const receiptNim = record.nim || "";
       const detectedFaculty =
-        resolveFacultyName(record.fakultas, record.prodi) || getFacultyFromNim(receiptNim);
+        resolveFacultyName(record.fakultas, record.prodi) || record.fakultas || "-";
       const combinedReason = `Pilihan 1 (${record.primary_division_name || record.primary_division_id}): ${record.primary_reason || "-"}\n\nPilihan 2 (${record.secondary_division_name || record.secondary_division_id}): ${record.secondary_reason || "-"}`;
 
       const receipt: SubmissionReceiptData = {
@@ -160,6 +173,8 @@ export function useRegistrationForm() {
         secondaryReason: record.secondary_reason || "",
         fileName: record.cv_file_name || "cv.pdf",
         fileSizeFormatted: record.cv_file_size_bytes ? formatFileSize(record.cv_file_size_bytes) : "< 1.0 MB (Lolos Validasi)",
+        twibbonUrl: record.twibbon_url || undefined,
+        portfolioUrl: record.portfolio_url || undefined,
         submittedAt: record.submitted_at
           ? new Date(record.submitted_at).toLocaleDateString("id-ID", {
               day: "numeric",
@@ -179,7 +194,7 @@ export function useRegistrationForm() {
     // Jika berstatus draft, lompat ke tahap terakhir yang belum diselesaikan
     const nextStep = record.current_step === 4 ? 5 : 4;
     setCurrentStep(nextStep);
-    setRestoreMessage("Progres pendaftaran tersimpan berhasil dimuat kembali (Data terkunci).");
+    setRestoreMessage("Progres pendaftaran tersimpan berhasil dimuat kembali.");
     setTimeout(() => setRestoreMessage(null), 6000);
   }, []);
 
@@ -249,11 +264,10 @@ export function useRegistrationForm() {
     };
   }, [restoreDraftFromRecord]);
 
-  // Validasi Step 1: Syarat
+  // Validasi Step 1: Syarat (otomatis valid)
   const validateStep1 = (): boolean => {
-    const res = validateStep1Util(agreedToRequirements);
-    setRequirementsError(res.error);
-    return res.isValid;
+    setRequirementsError("");
+    return true;
   };
 
   // Validasi Step 2: Akun Google
@@ -289,12 +303,15 @@ export function useRegistrationForm() {
     return res.isValid;
   };
 
-  // Validasi Step 5: Berkas CV
+  // Validasi Step 5: Berkas CV & Link
   const validateStep5 = (): boolean => {
     const res = validateStep5Util({
       cvFile,
       cvAgreement,
       maxSizeBytes: MAX_FILE_SIZE,
+      twibbonUrl,
+      portfolioUrl,
+      isMediaSelected,
     });
     setErrors(res.errors);
     return res.isValid;
@@ -318,6 +335,9 @@ export function useRegistrationForm() {
       secondaryDivision,
       secondaryReason,
       cvFile,
+      twibbonUrl,
+      portfolioUrl,
+      isMediaSelected,
       cvAgreement,
     });
   }, [
@@ -337,6 +357,9 @@ export function useRegistrationForm() {
     secondaryDivision,
     secondaryReason,
     cvFile,
+    twibbonUrl,
+    portfolioUrl,
+    isMediaSelected,
     cvAgreement,
   ]);
 
@@ -402,10 +425,10 @@ export function useRegistrationForm() {
   };
 
   /**
-   * Pemicu tombol Lanjut Step 3: validasi terlebih dahulu, lalu buka pop-up konfirmasi simpan permanen
+   * Pemicu tombol Lanjut Step 3: validasi identitas dan simpan ke database tanpa pop-up
    */
-  const handleNextFromStep3 = () => {
-    if (isIdentityLocked || isFullySubmitted) {
+  const handleNextFromStep3 = async () => {
+    if (isFullySubmitted) {
       setCurrentStep(4);
       scrollToTop();
       return;
@@ -415,11 +438,11 @@ export function useRegistrationForm() {
       return;
     }
 
-    setConfirmModalType("step3");
+    await executeSaveStep3();
   };
 
   /**
-   * Eksekusi Simpan Permanen Step 3 ke Edge Function setelah user mengonfirmasi pop-up
+   * Eksekusi Simpan Data Step 3 ke Supabase Database
    */
   const executeSaveStep3 = async () => {
     setIsSavingStep(true);
@@ -440,7 +463,6 @@ export function useRegistrationForm() {
       });
 
       if (!result.success) {
-        setConfirmModalType(null);
         if (
           result.error &&
           (result.error.includes("terkirim") ||
@@ -465,7 +487,6 @@ export function useRegistrationForm() {
         setSavedRecord(result.data);
       }
 
-      setConfirmModalType(null);
       setErrors({});
       setCurrentStep(4);
       scrollToTop();
@@ -475,10 +496,10 @@ export function useRegistrationForm() {
   };
 
   /**
-   * Pemicu tombol Lanjut Step 4: validasi terlebih dahulu, lalu buka pop-up konfirmasi simpan permanen
+   * Pemicu tombol Lanjut Step 4: validasi divisi dan simpan ke database tanpa pop-up
    */
-  const handleNextFromStep4 = () => {
-    if (isDivisionLocked || isFullySubmitted) {
+  const handleNextFromStep4 = async () => {
+    if (isFullySubmitted) {
       setCurrentStep(5);
       scrollToTop();
       return;
@@ -488,11 +509,11 @@ export function useRegistrationForm() {
       return;
     }
 
-    setConfirmModalType("step4");
+    await executeSaveStep4();
   };
 
   /**
-   * Eksekusi Simpan Permanen Step 4 ke Edge Function setelah user mengonfirmasi pop-up
+   * Eksekusi Simpan Data Step 4 ke Supabase Database
    */
   const executeSaveStep4 = async () => {
     setIsSavingStep(true);
@@ -513,7 +534,6 @@ export function useRegistrationForm() {
       });
 
       if (!result.success) {
-        setConfirmModalType(null);
         if (
           result.error &&
           (result.error.includes("terkirim") ||
@@ -538,7 +558,6 @@ export function useRegistrationForm() {
         setSavedRecord(result.data);
       }
 
-      setConfirmModalType(null);
       setErrors({});
       setCurrentStep(5);
       scrollToTop();
@@ -547,20 +566,54 @@ export function useRegistrationForm() {
     }
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     if (isFullySubmitted) return;
     setFileError(null);
 
-    const allowedExtensions = [".pdf"];
-    const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-    const isPdfType = file.type === "application/pdf" || fileExtension === ".pdf";
+    const fileName = (file.name || "").trim();
+    const lowerName = fileName.toLowerCase();
 
-    if (!isPdfType || !allowedExtensions.includes(fileExtension)) {
+    // 1. Cek karakter terlarang / manipulasi ekstensi (null bytes, control chars, Unicode RLO)
+    if (
+      /[\x00-\x1F\x7F]/.test(fileName) ||
+      fileName.includes("%00") ||
+      fileName.includes("\0") ||
+      /[\u202A-\u202E\u2066-\u2069]/.test(fileName)
+    ) {
+      setFileError("Keamanan berkas terancam: Nama berkas mengandung karakter terlarang atau manipulasi ekstensi.");
+      setCvFile(null);
+      return;
+    }
+
+    // 2. Cek ekstensi wajib .pdf
+    if (!lowerName.endsWith(".pdf")) {
       setFileError("Format berkas tidak didukung. Berkas CV wajib dalam format PDF (.pdf).");
       setCvFile(null);
       return;
     }
 
+    // 3. Deteksi serangan double extension (misal: .exe.pdf, .bat.pdf, .scr.pdf)
+    const FORBIDDEN_EXTS = [
+      "exe", "dll", "com", "bat", "cmd", "scr", "pif", "hta", "cpl", "jar",
+      "vbs", "js", "ps1", "sh", "bin", "msi", "zip", "rar", "7z"
+    ];
+    const nameParts = lowerName.split(".");
+    for (let i = 1; i < nameParts.length - 1; i++) {
+      if (FORBIDDEN_EXTS.includes(nameParts[i].trim())) {
+        setFileError(`Keamanan berkas terancam: Terdeteksi ekstensi berbahaya tersembunyi (".${nameParts[i]}"). Berkas CV harus dokumen PDF asli.`);
+        setCvFile(null);
+        return;
+      }
+    }
+
+    // 4. Cek MIME type
+    if (file.type && file.type !== "application/pdf" && file.type !== "application/x-pdf") {
+      setFileError("Format berkas tidak didukung. Berkas CV wajib berupa dokumen PDF resmi.");
+      setCvFile(null);
+      return;
+    }
+
+    // 5. Cek batas ukuran
     if (file.size > MAX_FILE_SIZE) {
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
       setFileError(
@@ -568,6 +621,32 @@ export function useRegistrationForm() {
       );
       setCvFile(null);
       return;
+    }
+
+    // 6. Cek Magic Byte di browser (%PDF- dan deteksi MZ/PE executable)
+    try {
+      const sliceBuffer = await file.slice(0, 5).arrayBuffer();
+      const headerBytes = new Uint8Array(sliceBuffer);
+      // Deteksi tanda tangan eksekusi Windows (.exe / .dll: MZ)
+      if ((headerBytes[0] === 0x4D && headerBytes[1] === 0x5A) || (headerBytes[0] === 0x5A && headerBytes[1] === 0x4D)) {
+        setFileError("Keamanan berkas terancam: Berkas terdeteksi sebagai program eksekusi (.exe) yang disamarkan.");
+        setCvFile(null);
+        return;
+      }
+      // Validasi %PDF- (0x25 0x50 0x44 0x46 0x2D)
+      const isPdf =
+        headerBytes[0] === 0x25 &&
+        headerBytes[1] === 0x50 &&
+        headerBytes[2] === 0x44 &&
+        headerBytes[3] === 0x46 &&
+        headerBytes[4] === 0x2D;
+      if (!isPdf) {
+        setFileError("Integritas berkas gagal: Berkas bukan dokumen PDF yang sah (Magic Bytes tidak sesuai).");
+        setCvFile(null);
+        return;
+      }
+    } catch {
+      // Browser fallback
     }
 
     setCvFile(file);
@@ -620,6 +699,8 @@ export function useRegistrationForm() {
         secondaryDivisionId: secondaryDivision,
         secondaryReason,
         cvFile,
+        twibbonUrl,
+        portfolioUrl,
         agreedToRequirements,
         agreedToCvTruth: cvAgreement,
       };
@@ -648,7 +729,7 @@ export function useRegistrationForm() {
       }
 
       const receiptNim = nim.trim().toUpperCase();
-      const detectedFaculty = fakultas.trim() || getFacultyFromNim(receiptNim);
+      const detectedFaculty = fakultas.trim() || resolveFacultyName(fakultas, prodi);
       const combinedReason = `Pilihan 1 (${primaryDivision}): ${primaryReason.trim()}\n\nPilihan 2 (${secondaryDivision}): ${secondaryReason.trim()}`;
 
       const receipt: SubmissionReceiptData = {
@@ -667,6 +748,8 @@ export function useRegistrationForm() {
         secondaryReason: secondaryReason.trim(),
         fileName: cvFile ? cvFile.name : "cv.pdf",
         fileSizeFormatted: cvFile ? formatFileSize(cvFile.size) : "0 KB",
+        twibbonUrl: twibbonUrl.trim() || undefined,
+        portfolioUrl: portfolioUrl.trim() || undefined,
         submittedAt: new Date().toLocaleDateString("id-ID", {
           day: "numeric",
           month: "long",
@@ -708,6 +791,8 @@ export function useRegistrationForm() {
     setSecondaryReason("");
     setCvFile(null);
     setFileError(null);
+    setTwibbonUrl("");
+    setPortfolioUrl("");
     setCvAgreement(false);
     setErrors({});
     setSubmissionSuccess(null);
@@ -829,9 +914,14 @@ export function useRegistrationForm() {
     handleNextFromStep4,
     executeSaveStep4,
 
-    // Step 5: Berkas CV
+    // Step 5: Berkas CV & Link
     cvFile,
     fileError,
+    twibbonUrl,
+    setTwibbonUrl,
+    portfolioUrl,
+    setPortfolioUrl,
+    isMediaSelected,
     cvAgreement,
     setCvAgreement,
     handleFileSelect,

@@ -125,9 +125,11 @@ CREATE TABLE public.applicants (
   angkatan VARCHAR(10) CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026')),
   whatsapp VARCHAR(30) CHECK (whatsapp IS NULL OR whatsapp ~ '^08[0-9]{8,13}$'),
   
-  -- Berkas CV & Persetujuan
+  -- Berkas CV & Tautan Pendukung
   cv_file_name VARCHAR(255),
   cv_storage_path TEXT,
+  twibbon_url TEXT,
+  portfolio_url TEXT,
   agreed_requirements BOOLEAN DEFAULT FALSE,
   agreed_truth BOOLEAN DEFAULT FALSE,
   
@@ -161,6 +163,7 @@ CREATE TABLE public.assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   applicant_id UUID NOT NULL REFERENCES public.applicants(id) ON DELETE CASCADE,
   status VARCHAR(30) NOT NULL DEFAULT 'pertimbangan' CHECK (status IN ('diterima', 'ditolak', 'pertimbangan')),
+  accepted_division_id VARCHAR(50) REFERENCES public.divisions(id) ON DELETE SET NULL,
   notes TEXT,
   assessed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -170,6 +173,7 @@ CREATE TABLE public.assessments (
 
 CREATE INDEX idx_assessments_applicant ON public.assessments(applicant_id);
 CREATE INDEX idx_assessments_status ON public.assessments(status);
+CREATE INDEX idx_assessments_accepted_division ON public.assessments(accepted_division_id);
 
 -- 5. View Kompatibilitas Relasional & Reporting
 CREATE OR REPLACE VIEW public.view_registrations WITH (security_invoker = true) AS
@@ -181,13 +185,19 @@ SELECT
   a.cv_file_name, a.cv_storage_path,
   a.agreed_requirements, a.agreed_truth, a.submitted_at, a.created_at, a.updated_at,
   COALESCE(ass.status, 'pertimbangan') AS assessment_status,
-  ass.notes AS assessment_notes
+  ass.notes AS assessment_notes,
+  ass.accepted_division_id,
+  ad.name AS accepted_division_name,
+  ad.category AS accepted_division_category,
+  a.twibbon_url,
+  a.portfolio_url
 FROM public.applicants a
 LEFT JOIN public.applicant_divisions p1 ON p1.applicant_id = a.id AND p1.priority = 1
 LEFT JOIN public.divisions d1 ON d1.id = p1.division_id
 LEFT JOIN public.applicant_divisions p2 ON p2.applicant_id = a.id AND p2.priority = 2
 LEFT JOIN public.divisions d2 ON d2.id = p2.division_id
-LEFT JOIN public.assessments ass ON ass.applicant_id = a.id;
+LEFT JOIN public.assessments ass ON ass.applicant_id = a.id
+LEFT JOIN public.divisions ad ON ad.id = ass.accepted_division_id;
 ```
 
 ---

@@ -12,6 +12,7 @@ export * from "./DivisionSection";
 export * from "./ContactFooter";
 export * from "./login";
 export * from "./registration";
+export * from "./announcement";
 
 
 
