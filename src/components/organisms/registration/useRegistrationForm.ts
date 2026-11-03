@@ -681,10 +681,20 @@ export function useRegistrationForm() {
    * Eksekusi Pengiriman Pendaftaran Final setelah konfirmasi pop-up
    */
   const executeFinalSubmit = async () => {
+    if (!validateStep5()) {
+      setConfirmModalType(null);
+      return;
+    }
+
     setIsSubmitting(true);
     setFileError(null);
 
     try {
+      let cleanTwibbon = twibbonUrl.trim();
+      if (cleanTwibbon && !/^https?:\/\//i.test(cleanTwibbon) && cleanTwibbon.toLowerCase().startsWith("drive.google.com")) {
+        cleanTwibbon = `https://${cleanTwibbon}`;
+      }
+
       const input: RegistrationFormInput = {
         fullName,
         nim,
@@ -699,7 +709,7 @@ export function useRegistrationForm() {
         secondaryDivisionId: secondaryDivision,
         secondaryReason,
         cvFile,
-        twibbonUrl,
+        twibbonUrl: cleanTwibbon,
         portfolioUrl,
         agreedToRequirements,
         agreedToCvTruth: cvAgreement,
@@ -728,7 +738,7 @@ export function useRegistrationForm() {
         setSavedRecord(result.data as SupabaseRegistrationRecord);
       }
 
-      const receiptNim = nim.trim().toUpperCase();
+      const receiptNim = nim.trim();
       const detectedFaculty = fakultas.trim() || resolveFacultyName(fakultas, prodi);
       const combinedReason = `Pilihan 1 (${primaryDivision}): ${primaryReason.trim()}\n\nPilihan 2 (${secondaryDivision}): ${secondaryReason.trim()}`;
 

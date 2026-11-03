@@ -83,9 +83,9 @@ export const RegistrationConfirmModals: React.FC<RegistrationConfirmModalsProps>
             label: "Tautan Pendukung",
             value:
               twibbonUrl && portfolioUrl
-                ? "Twibbon & Portofolio terlampir"
+                ? "Twibbon, Follow Medsos & Portofolio terlampir"
                 : twibbonUrl
-                ? "Twibbon terlampir"
+                ? "Twibbon & Follow Medsos terlampir"
                 : portfolioUrl
                 ? "Portofolio terlampir"
                 : "Tidak dicantumkan",

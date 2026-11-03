@@ -913,7 +913,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const trimmedName = (fullName || "").trim();
-      const trimmedNim = (nim || "").trim().toUpperCase();
+      const trimmedNim = (nim || "").trim();
       const trimmedAngkatan = (angkatan || "").trim();
       const trimmedFakultas = (inputFakultas || "").trim();
       const trimmedProdi = (prodi || "").trim();
@@ -979,37 +979,6 @@ Deno.serve(async (req: Request) => {
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (trimmedNim.length < 7 || trimmedNim.length > 12) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            field: "nim",
-            error: "Format NIM tidak valid: panjang harus antara 7 hingga 12 karakter.",
-          }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const firstLetter = trimmedNim.charAt(0);
-      if (!VALID_FACULTY_CODES.includes(firstLetter)) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            field: "nim",
-            error: `Format NIM tidak valid: inisial '${firstLetter}' bukan kode fakultas resmi UNS (contoh valid: I0724018).`,
-          }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (!/^[A-Z0-9]+$/.test(trimmedNim)) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            field: "nim",
-            error: "NIM hanya boleh berisi kombinasi huruf kapital dan angka.",
-          }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
 
       // Cek Duplikasi NIM
       const { data: nimConflict } = await supabaseAdmin
@@ -1045,18 +1014,19 @@ Deno.serve(async (req: Request) => {
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (!/^08[0-9]{8,13}$/.test(sanitizedWa)) {
+      if (!/^08[0-9]{8,18}$/.test(sanitizedWa)) {
         return new Response(
           JSON.stringify({
             success: false,
             field: "whatsapp",
-            error: "Nomor WhatsApp tidak valid: gunakan nomor seluler Indonesia yang diawali 08 (10-15 digit).",
+            error: "Nomor WhatsApp tidak valid: gunakan nomor seluler Indonesia yang diawali 08 (10-20 digit).",
           }),
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const fakultas = trimmedFakultas || NIM_FACULTY_MAP[firstLetter] || "-";
+      const firstLetter = trimmedNim ? trimmedNim.charAt(0).toUpperCase() : "";
+      const fakultas = trimmedFakultas || (firstLetter && NIM_FACULTY_MAP[firstLetter]) || "-";
 
       // Simpan Permanen (UPSERT ke tabel applicants)
       const { data: savedRecord, error: upsertErr } = await supabaseAdmin
@@ -1102,12 +1072,12 @@ Deno.serve(async (req: Request) => {
             { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        if (errStr.includes("chk_whatsapp_format")) {
+        if (errStr.includes("chk_whatsapp_format") || errStr.includes("applicants_whatsapp_check")) {
           return new Response(
             JSON.stringify({
               success: false,
               field: "whatsapp",
-              error: `Nomor WhatsApp tidak valid. Format harus diawali 08 dengan 10-15 digit angka.`,
+              error: `Nomor WhatsApp tidak valid. Format harus diawali 08 dengan 10-20 digit angka.`,
             }),
             { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );

@@ -21,7 +21,7 @@ import { RegistrationCvSection } from "./RegistrationCvSection";
 import { RegistrationSuccessSection } from "./RegistrationSuccessSection";
 import { RegistrationConfirmModals } from "./RegistrationConfirmModals";
 import { useRegistrationForm } from "./useRegistrationForm";
-import { MAX_FILE_SIZE } from "./registrationValidation";
+import { MAX_FILE_SIZE, isGoogleDriveUrl } from "./registrationValidation";
 import { registrationSteps } from "@/data/registration";
 import { CheckCircle2 } from "lucide-react";
 
@@ -250,7 +250,29 @@ export const RegistrationForm: React.FC = () => {
           onTwibbonUrlChange={(val) => {
             if (isFullySubmitted) return;
             setTwibbonUrl(val);
-            if (errors.twibbonUrl) setErrors((prev) => ({ ...prev, twibbonUrl: "" }));
+            if (errors.twibbonUrl) {
+              if (!val.trim() || isGoogleDriveUrl(val)) {
+                setErrors((prev) => ({ ...prev, twibbonUrl: "" }));
+              }
+            }
+          }}
+          onTwibbonUrlBlur={() => {
+            if (isFullySubmitted) return;
+            const trimmed = twibbonUrl.trim();
+            if (!trimmed) return;
+            if (!/^https?:\/\//i.test(trimmed) && trimmed.toLowerCase().startsWith("drive.google.com")) {
+              setTwibbonUrl(`https://${trimmed}`);
+              if (errors.twibbonUrl) setErrors((prev) => ({ ...prev, twibbonUrl: "" }));
+              return;
+            }
+            if (!isGoogleDriveUrl(trimmed)) {
+              setErrors((prev) => ({
+                ...prev,
+                twibbonUrl: "Tautan wajib berupa link Google Drive (contoh: https://drive.google.com/...)",
+              }));
+            } else if (errors.twibbonUrl) {
+              setErrors((prev) => ({ ...prev, twibbonUrl: "" }));
+            }
           }}
           onPortfolioUrlChange={(val) => {
             if (isFullySubmitted) return;

@@ -48,6 +48,25 @@ export function isValidWebUrl(urlString: string): boolean {
 }
 
 /**
+ * Validasi apakah URL merupakan tautan Google Drive resmi
+ */
+export function isGoogleDriveUrl(urlString: string): boolean {
+  if (!urlString) return false;
+  try {
+    const trimmed = urlString.trim();
+    if (!trimmed) return false;
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(candidate);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    // Hanya perbolehkan domain Google Drive (drive.google.com), tolak docs, forms, youtube, medsos dll
+    return host === "drive.google.com" || host.endsWith(".drive.google.com");
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Validasi Step 1: Syarat & Ketentuan
  */
 export function validateStep1(_agreedToRequirements?: boolean): {
@@ -82,16 +101,9 @@ export function validateStep3(data: PersonalStepData): {
     errors.fullName = "Nama tidak valid: nama lengkap tidak boleh mengandung angka";
   }
 
-  const cleanNim = data.nim.trim().toUpperCase();
+  const cleanNim = data.nim.trim();
   if (!cleanNim) {
     errors.nim = "NIM wajib diisi";
-  } else if (cleanNim.length < 7 || cleanNim.length > 12) {
-    errors.nim = "Format NIM tidak valid (panjang 7 - 12 karakter)";
-  } else {
-    const validInitials = ["F", "G", "H", "I", "D", "E", "B", "K", "M", "V", "L", "Z", "C", "P"];
-    if (!validInitials.includes(cleanNim.charAt(0))) {
-      errors.nim = "Format NIM tidak valid: inisial bukan kode fakultas resmi UNS";
-    }
   }
 
   if (!data.angkatan) {
@@ -116,8 +128,8 @@ export function validateStep3(data: PersonalStepData): {
   const cleanWa = data.whatsapp.trim().replace(/[-\s]/g, "");
   if (!cleanWa) {
     errors.whatsapp = "Nomor WhatsApp aktif wajib diisi";
-  } else if (!/^(08|\+628|628)[0-9]{8,12}$/.test(cleanWa)) {
-    errors.whatsapp = "Masukkan nomor seluler Indonesia yang valid diawali 08 (10-15 digit)";
+  } else if (!/^(08|\+628|628)[0-9]{8,18}$/.test(cleanWa)) {
+    errors.whatsapp = "Masukkan nomor seluler Indonesia yang valid diawali 08 (10-20 digit)";
   }
 
   return {
@@ -209,11 +221,11 @@ export function validateStep5(data: CvStepData): {
   const trimmedTwibbon = (data.twibbonUrl || "").trim();
   const trimmedPortfolio = (data.portfolioUrl || "").trim();
 
-  // Link twibbon wajib diisi oleh seluruh pendaftar
+  // Link twibbon & follow medsos wajib diisi dan harus link Google Drive
   if (!trimmedTwibbon) {
-    errors.twibbonUrl = "Link bukti upload twibbon wajib diisi";
-  } else if (!isValidWebUrl(trimmedTwibbon)) {
-    errors.twibbonUrl = "Format tautan tidak valid. Gunakan format URL lengkap (contoh: https://...)";
+    errors.twibbonUrl = "Link bukti upload twibbon & follow Instagram/TikTok wajib diisi";
+  } else if (!isGoogleDriveUrl(trimmedTwibbon)) {
+    errors.twibbonUrl = "Tautan wajib berupa link Google Drive (contoh: https://drive.google.com/...)";
   }
 
   // Link portofolio hanya wajib bagi pendaftar yang memilih divisi Media
@@ -271,12 +283,11 @@ export function calculateMaxReachableStep(input: MaxReachableStepInput): number 
     Boolean(input.fullName.trim()) &&
     !/\d/.test(input.fullName.trim()) &&
     Boolean(input.nim.trim()) &&
-    input.nim.trim().length >= 7 &&
     (input.angkatan === "2025" || input.angkatan === "2026") &&
     Boolean(input.fakultas.trim()) &&
     Boolean(input.prodi.trim()) &&
     Boolean(cleanWa) &&
-    /^[0-9+]{9,15}$/.test(cleanWa);
+    /^[0-9+]{9,20}$/.test(cleanWa);
   if (!isStep3Valid) return 3;
 
   const isStep4Valid =
@@ -289,7 +300,7 @@ export function calculateMaxReachableStep(input: MaxReachableStepInput): number 
     input.secondaryReason.trim().length >= 15;
   if (!isStep4Valid) return 4;
 
-  const isTwibbonValid = Boolean(input.twibbonUrl?.trim());
+  const isTwibbonValid = Boolean(input.twibbonUrl?.trim()) && isValidWebUrl(input.twibbonUrl || "") && isGoogleDriveUrl(input.twibbonUrl || "");
   const isPortfolioValid = !input.isMediaSelected || Boolean(input.portfolioUrl?.trim());
 
   const isStep5Valid =

@@ -28,6 +28,7 @@ export interface RegistrationCvSectionProps {
   onFileSelect: (file: File) => void;
   onFileRemove: () => void;
   onTwibbonUrlChange: (val: string) => void;
+  onTwibbonUrlBlur?: () => void;
   onPortfolioUrlChange: (val: string) => void;
   onAgreementChange: (val: boolean) => void;
   onPrev: () => void;
@@ -50,6 +51,7 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
   onFileSelect,
   onFileRemove,
   onTwibbonUrlChange,
+  onTwibbonUrlBlur,
   onPortfolioUrlChange,
   onAgreementChange,
   onPrev,
@@ -123,12 +125,12 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 sm:gap-4">
-          {/* Input 1: Link Bukti Upload Twibbon */}
+          {/* Input 1: Link Bukti Upload Twibbon & Follow Instagram & TikTok */}
           <FormField
-            label="Link Bukti Upload Twibbon"
+            label="Link Bukti Upload Twibbon, Follow Instagram, dan Follow TikTok"
             htmlFor="reg-twibbon-url"
             required={true}
-            sublabel="Wajib (Semua Anggota)"
+            sublabel="Wajib Google Drive"
             error={twibbonError || undefined}
           >
             {!isLocked ? (
@@ -138,7 +140,8 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
                   type="url"
                   value={twibbonUrl}
                   onChange={(e) => onTwibbonUrlChange(e.target.value)}
-                  placeholder="https://..."
+                  onBlur={onTwibbonUrlBlur}
+                  placeholder="https://drive.google.com/..."
                   error={Boolean(twibbonError)}
                   disabled={isSubmitting}
                   className="pr-9"

@@ -137,8 +137,8 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
             type="text"
             isMono
             value={nim}
-            onChange={(e) => onNimChange(e.target.value.toUpperCase())}
-            maxLength={12}
+            onChange={(e) => onNimChange(e.target.value)}
+            placeholder="Masukkan NIM"
             error={!!errors.nim}
             disabled={isDisabled}
           />
@@ -217,7 +217,7 @@ export const RegistrationPersonalSection: React.FC<RegistrationPersonalSectionPr
           htmlFor="reg-wa"
           required
           error={errors.whatsapp}
-          helperText="Format nomor diawali 08 (10-15 digit)"
+          helperText="Format nomor diawali 08 (10-20 digit)"
           className="sm:col-span-2"
         >
           <Input

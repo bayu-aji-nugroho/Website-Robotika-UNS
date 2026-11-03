@@ -289,7 +289,7 @@ export const RegistrationDivisionSection: React.FC<RegistrationDivisionSectionPr
           iconPosition="right"
         >
           <span>{isSaving ? "Menyimpan..." : isLocked ? "Lanjut" : "Lanjut"}</span>
-          <span className="hidden sm:inline"> {!isSaving && "ke Unggah CV"}</span>
+          <span className="hidden sm:inline"> {!isSaving && "ke Unggah Berkas"}</span>
         </Button>
       </div>
     </div>

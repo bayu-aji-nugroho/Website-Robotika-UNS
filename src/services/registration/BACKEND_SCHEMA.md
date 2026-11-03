@@ -57,7 +57,7 @@ Menyimpan data identitas mahasiswa ke tabel database dengan status `draft` dan `
   - `fullName`: Minimal 3 karakter. **Ditolak (422)** jika terdapat angka (`/\d/`) atau simbol ilegal (`<>;$%\`).
   - `angkatan`: **Hanya** `"2025"` atau `"2026"`. **Ditolak (422)** jika angkatan 2023, 2024, dll.
   - `nim`: Format UNS resmi diawali huruf fakultas valid (`F, G, H, I, D, E, B, K, M, V, L, Z, C, P`), panjang 7-12 karakter. **Ditolak (409)** jika NIM sudah digunakan oleh akun lain.
-  - `whatsapp`: Disanitasi (awalan `+628`/`628` -> `08`), panjang 10-15 digit angka.
+  - `whatsapp`: Disanitasi (awalan `+628`/`628` -> `08`), panjang 10-20 digit angka.
 - **Response**: Status `200 OK`, `{ "success": true, "message": "Data identitas berhasil disimpan permanen.", "data": ... }`
 
 ### Action 4: `save_step_4` (Simpan Permanen Pilihan Divisi)
@@ -123,7 +123,7 @@ CREATE TABLE public.applicants (
   fakultas VARCHAR(100),
   prodi VARCHAR(150),
   angkatan VARCHAR(10) CHECK (angkatan IS NULL OR angkatan IN ('2025', '2026')),
-  whatsapp VARCHAR(30) CHECK (whatsapp IS NULL OR whatsapp ~ '^08[0-9]{8,13}$'),
+  whatsapp VARCHAR(30) CHECK (whatsapp IS NULL OR whatsapp ~ '^08[0-9]{8,18}$'),
   
   -- Berkas CV & Tautan Pendukung
   cv_file_name VARCHAR(255),

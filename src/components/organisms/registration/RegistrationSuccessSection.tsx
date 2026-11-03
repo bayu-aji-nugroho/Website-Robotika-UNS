@@ -207,7 +207,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
                     <div className="flex items-center gap-2 min-w-0">
                       <Link2 className="w-4 h-4 text-[#B22234] shrink-0" />
                       <div className="min-w-0">
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">Bukti Upload Twibbon</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-[11px]">Bukti Upload Twibbon & Follow Medsos</p>
                         <p className="text-zinc-500 dark:text-zinc-400 font-mono text-[10px] sm:text-[11px] truncate">{data.twibbonUrl}</p>
                       </div>
                     </div>

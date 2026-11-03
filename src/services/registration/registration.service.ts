@@ -193,7 +193,7 @@ export async function getRegistrationProgress(): Promise<RegistrationProgressDat
  * Cek ketersediaan NIM secara real-time ke Supabase Edge Function
  */
 export async function checkNimAvailability(nim: string): Promise<NimCheckResult> {
-  const trimmed = nim.trim().toUpperCase();
+  const trimmed = nim.trim();
   if (!trimmed) {
     return { available: false, error: "NIM wajib diisi" };
   }
@@ -511,7 +511,7 @@ export function buildRegistrationPayload(
     registrationCode,
     applicant: {
       fullName: input.fullName.trim(),
-      nim: input.nim.trim().toUpperCase(),
+      nim: input.nim.trim(),
       fakultas: input.fakultas.trim(),
       prodi: input.prodi.trim(),
       angkatan: input.angkatan.trim(),

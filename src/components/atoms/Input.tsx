@@ -19,7 +19,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ? "border-[#B22234] bg-red-50/20 dark:bg-red-950/20 focus:border-[#B22234] focus:ring-[#B22234] field-error"
       : "border-zinc-300 dark:border-zinc-700 focus:border-[#B22234] focus:ring-[#B22234]";
 
-    const fontStyles = isMono ? "font-mono uppercase" : "";
+    const fontStyles = isMono ? "font-mono" : "";
 
     return (
       <input
