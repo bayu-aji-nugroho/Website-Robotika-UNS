@@ -1,60 +1,46 @@
 /*
 -----------------------------------------
 nama file: [ AnimatedWordBadge.tsx ] 
-fungsi [ Komponen badge interaktif dengan animasi pergantian kata kunci (teknologi, riset, inovasi) berbasis Framer Motion yang berganti otomatis secara berkala atau manual saat diklik oleh pengguna. ]
+fungsi [ Komponen badge interaktif dengan animasi teks berputar per huruf untuk kata kunci (teknologi, riset, inovasi) berbasis Framer Motion yang berganti otomatis secara berkala atau manual saat diklik oleh pengguna. ]
 -----------------------------------------------
 */
 
 "use client";
 
-import { motion, AnimatePresence, MotionConfig } from "framer-motion";
-import { Microscope, Lightbulb, Cpu } from "lucide-react";
+import { motion, AnimatePresence, MotionConfig, type Variants } from "framer-motion";
 import React, { useState, useEffect } from "react";
 
 interface WordItem {
   text: string;
-  icon: React.ComponentType<{ className?: string }>;
   textColor: string;
-  bgColor: string;
-  borderColor: string;
-  iconBg: string;
-  iconColor: string;
-  shadowColor: string;
 }
 
 const WORDS: WordItem[] = [
   {
     text: "teknologi",
-    icon: Cpu,
-    textColor: "text-[#0284c7] dark:text-[#38bdf8]",
-    bgColor: "bg-[#F0F7FF] dark:bg-sky-950/40",
-    borderColor: "border-[#BAE6FD] dark:border-sky-800/60",
-    iconBg: "bg-[#E0F2FE] dark:bg-sky-900/60 text-[#0284c7] dark:text-sky-200 border border-[#BAE6FD] dark:border-sky-700",
-    iconColor: "text-[#0284c7] dark:text-sky-200",
-    shadowColor: "shadow-[0_2px_12px_rgba(2,132,199,0.12)] dark:shadow-[0_2px_14px_rgba(56,189,248,0.2)]",
+    textColor: "text-[#B22234] dark:text-[#EE3B47]",
   },
   {
     text: "riset",
-    icon: Microscope,
-    textColor: "text-[#B22234] dark:text-[#ef4444]",
-    bgColor: "bg-[#FFF6F7] dark:bg-red-950/40",
-    borderColor: "border-[#F8D2D6] dark:border-red-900/60",
-    iconBg: "bg-[#FCF0F2] dark:bg-red-900/60 text-[#B22234] dark:text-red-200 border border-[#F4C7CD] dark:border-red-800",
-    iconColor: "text-[#B22234] dark:text-red-200",
-    shadowColor: "shadow-[0_2px_12px_rgba(178,34,52,0.08)] dark:shadow-[0_2px_12px_rgba(239,68,68,0.15)]",
+    textColor: "text-[#B22234] dark:text-[#EE3B47]",
   },
   {
     text: "inovasi",
-    icon: Lightbulb,
-    textColor: "text-[#A0522D] dark:text-[#fb923c]",
-    bgColor: "bg-[#FDF8F4] dark:bg-amber-950/40",
-    borderColor: "border-[#EBD8CA] dark:border-amber-900/60",
-    iconBg: "bg-[#F7ECE1] dark:bg-amber-900/60 text-[#A0522D] dark:text-amber-200 border border-[#E5D2C2] dark:border-amber-800",
-    iconColor: "text-[#A0522D] dark:text-amber-200",
-    shadowColor: "shadow-[0_2px_12px_rgba(160,82,45,0.08)] dark:shadow-[0_2px_12px_rgba(245,158,11,0.15)]",
+    textColor: "text-[#B22234] dark:text-[#EE3B47]",
   },
 ];
 
+const wordVariants: Variants = {
+  enter: {},
+  center: { transition: { staggerChildren: 0.03 } },
+  leave: { transition: { staggerChildren: 0.02 } },
+};
+
+const rotateVariants: Variants = {
+  enter: { y: "90%", rotateX: -90, opacity: 0 },
+  center: { y: 0, rotateX: 0, opacity: 1, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+  leave: { y: "-90%", rotateX: 90, opacity: 0, transition: { duration: 0.22, ease: "easeIn" } },
+};
 
 export const AnimatedWordBadge: React.FC = () => {
   const [index, setIndex] = useState(0);
@@ -72,7 +58,6 @@ export const AnimatedWordBadge: React.FC = () => {
   };
 
   const currentItem = WORDS[index];
-  const CurrentIcon = currentItem.icon;
 
   return (
     <MotionConfig reducedMotion="never">
@@ -94,26 +79,27 @@ export const AnimatedWordBadge: React.FC = () => {
         <motion.span
           layout
           transition={{ layout: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }}
-          className={`relative inline-flex items-center overflow-hidden border rounded-lg sm:rounded-xl md:rounded-2xl px-2 sm:px-3 py-0.5 sm:py-1 h-[36px] sm:h-[46px] lg:h-[52px] transition-colors duration-500 ${currentItem.bgColor} ${currentItem.borderColor} ${currentItem.shadowColor}`}
+          className="relative inline-flex items-center overflow-hidden py-0.5 sm:py-1 h-[40px] sm:h-[56px] lg:h-[66px]"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
               key={currentItem.text}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="inline-flex items-center gap-1 sm:gap-1.5 whitespace-nowrap font-['League_Spartan',sans-serif]"
+              variants={wordVariants}
+              initial="enter"
+              animate="center"
+              exit="leave"
+              style={{ perspective: 400 }}
+              className="inline-flex items-center whitespace-nowrap font-['League_Spartan',sans-serif]"
             >
               <span
-                className={`p-0.5 sm:p-1 rounded-md sm:rounded-lg flex items-center justify-center shrink-0 ${currentItem.iconBg}`}
+                className={`inline-flex text-3xl sm:text-5xl lg:text-[56px] font-extrabold uppercase tracking-tight ${currentItem.textColor}`}
               >
-                <CurrentIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-              </span>
-              <span
-                className={`text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight ${currentItem.textColor}`}
-              >
-                {currentItem.text}
+                <span className="sr-only">{currentItem.text}</span>
+                {currentItem.text.split("").map((char, i) => (
+                  <motion.span key={i} aria-hidden="true" variants={rotateVariants} className="inline-block">
+                    {char}
+                  </motion.span>
+                ))}
               </span>
             </motion.span>
           </AnimatePresence>

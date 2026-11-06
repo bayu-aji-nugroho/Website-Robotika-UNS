@@ -8,6 +8,51 @@
   --font-space-grotesk: var(--font-league-spartan), sans-serif;
   --font-jakarta: var(--font-league-spartan), sans-serif;
   --font-inter: var(--font-league-spartan), sans-serif;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-page-fade: page-fade 0.35s ease-out both;
+  --animate-draw-glyph: draw-glyph 1.3s ease-in-out both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes draw-glyph {
+    0% {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      stroke-width: 1.5;
+      fill-opacity: 0;
+    }
+    65% {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      stroke-width: 1.5;
+      fill-opacity: 0;
+    }
+    100% {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      stroke-width: 0;
+      fill-opacity: 1;
+    }
+  }
+
+  @keyframes page-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {
@@ -44,6 +89,28 @@
   }
 }
 
+
+html {
+  /* Mengimbangi tinggi navbar fixed saat melompat ke anchor */
+  scroll-padding-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Transisi warna dimatikan agar tepi sebaran tema baru tetap tegas */
+.theme-ripple *:not(svg):not(svg *) {
+  transition: none !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
 
 body {
   background-color: var(--color-bg-light);
@@ -86,6 +153,33 @@ body {
   border-color: #B22234;
 }
 
+
+.skeleton {
+  background-color: #e4e4e7;
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.75) 50%, transparent 70%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+}
+
+.dark .skeleton {
+  background-color: #27282f;
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.5s linear infinite;
+  }
+}
 
 .bg-grid-pattern {
   background-size: 32px 32px;

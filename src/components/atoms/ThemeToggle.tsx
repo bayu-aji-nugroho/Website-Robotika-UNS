@@ -26,10 +26,15 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
 
   const isCompact = size === "sm";
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    toggleTheme({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+  };
+
   return (
     <button
       type="button"
-      onClick={toggleTheme}
+      onClick={handleClick}
       className={
         isCompact
           ? `relative inline-flex items-center justify-center p-1.5 rounded-md text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#B22234] cursor-pointer ${className}`

@@ -7,6 +7,10 @@ fungsi [ Berkas gerbang ekspor (barrel file) tingkat atom yang menyatukan dan me
 
 export * from "./Button";
 export * from "./Container";
+export * from "./CountUp";
+export * from "./Reveal";
+export * from "./DrawnText";
+export * from "./Skeleton";
 export * from "./Input";
 export * from "./Select";
 export * from "./Textarea";

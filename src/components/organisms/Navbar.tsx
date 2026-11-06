@@ -9,6 +9,7 @@ fungsi [ Komponen navigasi bar utama di bagian atas halaman dengan logo brand, t
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Container, ThemeToggle } from "../atoms";
 import { NavBrand, NavLinks, NavUserMenu } from "../molecules";
 import { Menu, X, LogOut } from "lucide-react";
@@ -73,7 +74,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#121316]/95 backdrop-blur-md transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#121316]/95 backdrop-blur-md transition-all duration-300 ease-out ${
         scrolled
           ? "border-b border-[#e4e4e7] dark:border-zinc-800 py-3 sm:py-4 shadow-2xs"
           : "py-3.5 sm:py-6"
@@ -127,54 +128,64 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden mt-4 p-4 rounded-xl bg-white dark:bg-[#18191e] border border-[#e4e4e7] dark:border-zinc-800 space-y-3 shadow-lg">
-            <NavLinks
-              className="flex-col items-start gap-3"
-              onItemClick={() => setMobileMenuOpen(false)}
-            />
+        <AnimatePresence initial={false}>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden overflow-hidden"
+            >
+              <div className="mt-4 mb-1 p-4 rounded-xl bg-white dark:bg-[#18191e] border border-[#e4e4e7] dark:border-zinc-800 space-y-3 shadow-lg">
+                <NavLinks
+                  className="flex-col items-start gap-3"
+                  onItemClick={() => setMobileMenuOpen(false)}
+                />
 
-            <div className="pt-3 border-t border-[#e4e4e7] dark:border-zinc-800 space-y-2">
-              <Link
-                href="/pengumuman"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-800 rounded-md transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                Hasil Seleksi
-              </Link>
+                <div className="pt-3 border-t border-[#e4e4e7] dark:border-zinc-800 space-y-2">
+                  <Link
+                    href="/pengumuman"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-center py-2 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-800 rounded-md transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  >
+                    Hasil Seleksi
+                  </Link>
 
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] rounded-md transition-colors"
-              >
-                Daftar Sekarang
-              </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-center py-2 text-xs font-semibold text-white bg-[#B22234] hover:bg-[#8B0000] dark:bg-[#C52233] dark:hover:bg-[#B22234] rounded-md transition-colors"
+                  >
+                    Daftar Sekarang
+                  </Link>
 
-              {/* Opsi Logout Mobile jika sedang Login */}
-              {user && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 rounded-md hover:bg-red-100/50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Keluar (Logout)</span>
-                </button>
-              )}
-            </div>
+                  {/* Opsi Logout Mobile jika sedang Login */}
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 rounded-md hover:bg-red-100/50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Keluar (Logout)</span>
+                    </button>
+                  )}
+                </div>
 
-            <div className="pt-2 border-t border-[#e4e4e7] dark:border-zinc-800 flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#18181b] dark:text-zinc-300">
-                Mode Tampilan
-              </span>
-              <ThemeToggle showLabel />
-            </div>
-          </div>
-        )}
+                <div className="pt-2 border-t border-[#e4e4e7] dark:border-zinc-800 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#18181b] dark:text-zinc-300">
+                    Mode Tampilan
+                  </span>
+                  <ThemeToggle showLabel />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Container>
     </header>
   );

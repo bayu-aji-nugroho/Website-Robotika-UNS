@@ -18,3 +18,4 @@ export * from "./NavUserMenu";
 export * from "./ConfirmationModal";
 export * from "./AdminWhatsAppButton";
 
+export * from "./HeroVisual";
