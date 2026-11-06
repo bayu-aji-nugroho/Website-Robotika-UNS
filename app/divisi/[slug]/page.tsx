@@ -117,7 +117,7 @@ async function DivisionContent({ params }: PageProps) {
           <span className="block text-xs font-bold uppercase tracking-wider text-[#B22234] dark:text-red-400 font-sans">
             {item.category}
           </span>
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight font-['League_Spartan',sans-serif] leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-tight">
             {item.name}
           </h1>
         </div>

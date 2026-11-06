@@ -64,7 +64,7 @@ export const DivisionSection: React.FC = () => {
         <div className="space-y-10 sm:space-y-12 lg:space-y-16">
           <Reveal className="space-y-2 sm:space-y-3">
             <SkeletonReveal ready={ready} className="w-fit">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-tight font-['League_Spartan',sans-serif]">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-tight">
                 Ekosistem Kami
               </h2>
             </SkeletonReveal>

@@ -28,7 +28,7 @@ export const AdminBrandHeader: React.FC<AdminBrandHeaderProps> = ({
         <div className="w-7 h-7 rounded-md bg-[#B22234] flex items-center justify-center text-white font-extrabold text-xs shadow-xs group-hover:bg-[#8B0000] transition-colors">
           R
         </div>
-        <span className="font-['League_Spartan',sans-serif] font-extrabold text-xs tracking-wider text-[#18181b] dark:text-zinc-100 uppercase leading-none">
+        <span className="font-extrabold text-xs tracking-wider text-[#18181b] dark:text-zinc-100 uppercase leading-none">
           ROBOTIKA UNS
         </span>
       </Link>

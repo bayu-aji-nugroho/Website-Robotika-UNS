@@ -87,10 +87,10 @@ Sistem warna memadukan warna merah khas almamater UNS dengan palet netral zinc y
 
 ## 4. Typography System
 
-Tipografi seluruh website kini menggunakan font tunggal teroptimasi **League Spartan** via `next/font/google`:
+Tipografi seluruh website kini menggunakan font tunggal teroptimasi **Plus Jakarta Sans** via `next/font/google`:
 
 ```
-1. League Spartan -> Bold, Modern, Geometric, Display, Heading & Body
+1. Plus Jakarta Sans -> Bold, Modern, Geometric, Display, Heading & Body
 2. JetBrains/Mono -> Technical Metadata, Counters, Badges
 ```
 
@@ -98,13 +98,13 @@ Tipografi seluruh website kini menggunakan font tunggal teroptimasi **League Spa
 
 | Tingkatan | Font Family | Desktop Size / Leading | Mobile Size / Leading | Weight | Penggunaan |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Hero Title** | League Spartan | `60px` / `1.15` | `32px` / `1.2` | Extrabold (800) | Judul besar Hero Section |
-| **Section Title (H2)** | League Spartan | `36px - 40px` / `1.25` | `24px - 28px` / `1.3` | Extrabold (800) | Judul Section ("Tentang Kami", "Ekosistem") |
-| **Sub-heading (H3)** | League Spartan | `20px - 24px` / `1.3` | `18px` / `1.35` | Bold (700) | Header kategori ("Tim Robotika", "Teknis") |
-| **Card Title (H4)** | League Spartan | `16px - 18px` / `1.4` | `15px - 16px` / `1.4` | Bold (700) | Judul nama tim/divisi di dalam kartu |
-| **Lead Paragraph** | League Spartan | `16px - 18px` / `1.6` | `14px - 15px` / `1.6` | Medium / Semibold | Kalimat pembuka section / tagline divisi |
-| **Body Text** | League Spartan | `14px` / `1.65` | `13px` / `1.6` | Regular (400) | Deskripsi umum, penjelasan peran divisi |
-| **Caption / Tiny** | League Spartan | `12px` / `1.5` | `11px` / `1.5` | Medium (500) | Catatan kaki, copyright, link eksternal |
+| **Hero Title** | Plus Jakarta Sans | `60px` / `1.15` | `32px` / `1.2` | Extrabold (800) | Judul besar Hero Section |
+| **Section Title (H2)** | Plus Jakarta Sans | `36px - 40px` / `1.25` | `24px - 28px` / `1.3` | Extrabold (800) | Judul Section ("Tentang Kami", "Ekosistem") |
+| **Sub-heading (H3)** | Plus Jakarta Sans | `20px - 24px` / `1.3` | `18px` / `1.35` | Bold (700) | Header kategori ("Tim Robotika", "Teknis") |
+| **Card Title (H4)** | Plus Jakarta Sans | `16px - 18px` / `1.4` | `15px - 16px` / `1.4` | Bold (700) | Judul nama tim/divisi di dalam kartu |
+| **Lead Paragraph** | Plus Jakarta Sans | `16px - 18px` / `1.6` | `14px - 15px` / `1.6` | Medium / Semibold | Kalimat pembuka section / tagline divisi |
+| **Body Text** | Plus Jakarta Sans | `14px` / `1.65` | `13px` / `1.6` | Regular (400) | Deskripsi umum, penjelasan peran divisi |
+| **Caption / Tiny** | Plus Jakarta Sans | `12px` / `1.5` | `11px` / `1.5` | Medium (500) | Catatan kaki, copyright, link eksternal |
 | **Tech Metadata** | Monospace | `11px - 12px` / `1` | `10px - 11px` / `1` | Bold (700) / Mono | Nomor indeks `01`, badge `OPREC`, slug path |
 
 ---

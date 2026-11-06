@@ -89,7 +89,7 @@ export const AnimatedWordBadge: React.FC = () => {
               animate="center"
               exit="leave"
               style={{ perspective: 400 }}
-              className="inline-flex items-center whitespace-nowrap font-['League_Spartan',sans-serif]"
+              className="inline-flex items-center whitespace-nowrap"
             >
               <span
                 className={`inline-flex text-3xl sm:text-5xl lg:text-[56px] font-extrabold uppercase tracking-tight ${currentItem.textColor}`}

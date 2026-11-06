@@ -59,7 +59,7 @@ export const AboutSection: React.FC = () => {
                 </p>
               </SkeletonReveal>
               <SkeletonReveal ready={ready} lines={2} className="text-3xl sm:text-5xl lg:text-[56px]">
-                <h2 className="text-3xl sm:text-5xl lg:text-[56px] font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-[1.15] font-['League_Spartan',sans-serif]">
+                <h2 className="text-3xl sm:text-5xl lg:text-[56px] font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-[1.15]">
                   <span className="block">Ketika ide dan</span>
                   <span className="inline-flex items-center flex-wrap gap-x-2 sm:gap-x-3 gap-y-1.5">
                     <AnimatedWordBadge />
@@ -97,7 +97,7 @@ export const AboutSection: React.FC = () => {
             {STATS.map(({ to, suffix, label }, i) => (
               <Reveal key={label} delay={i * 0.1} className="px-3 sm:px-8 lg:px-12">
                 <SkeletonReveal ready={ready} className="w-fit">
-                  <CountUp to={to} suffix={suffix} start={ready} className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#B22234] dark:text-[#EE3B47] block tracking-tight font-['League_Spartan',sans-serif]" />
+                  <CountUp to={to} suffix={suffix} start={ready} className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#B22234] dark:text-[#EE3B47] block tracking-tight" />
                 </SkeletonReveal>
                 <SkeletonReveal ready={ready} className="w-fit">
                   <span className="text-[11px] sm:text-sm font-semibold text-[#18181b] dark:text-zinc-200 block mt-1">

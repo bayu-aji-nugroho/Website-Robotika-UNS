@@ -38,7 +38,7 @@ export const AdminWhatsAppButton: React.FC<AdminWhatsAppButtonProps> = ({
               <WhatsAppIcon className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 font-['League_Spartan',sans-serif]">
+              <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
                 Punya pertanyaan seputar pendaftaran?
               </h3>
               <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">

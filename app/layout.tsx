@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { League_Spartan } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/src/context";
 import "./globals.css";
 
-const leagueSpartan = League_Spartan({
-  variable: "--font-league-spartan",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +34,7 @@ export default function RootLayout({
       lang="id"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${leagueSpartan.variable} h-full`}
+      className={`${plusJakartaSans.variable} h-full`}
     >
       <head>
         <script

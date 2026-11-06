@@ -81,7 +81,7 @@ export const RegistrationDivisionSection: React.FC<RegistrationDivisionSectionPr
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#B22234] text-white text-xs font-bold shrink-0">
               4
             </span>
-            <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]">
+            <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Pilihan Divisi Minat
             </h2>
           </div>
@@ -122,7 +122,7 @@ export const RegistrationDivisionSection: React.FC<RegistrationDivisionSectionPr
       {/* Pilihan Pertama */}
       <div className="space-y-3 sm:space-y-4 p-3.5 sm:p-4 rounded-xl bg-zinc-50/70 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800">
         <div className="flex items-center justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-800/80 pb-2">
-          <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider font-[family-name:var(--font-space-grotesk)]">
+          <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
             Divisi Pilihan 1
           </span>
         </div>
@@ -191,7 +191,7 @@ export const RegistrationDivisionSection: React.FC<RegistrationDivisionSectionPr
       {/* Pilihan Kedua */}
       <div className="space-y-3 sm:space-y-4 p-3.5 sm:p-4 rounded-xl bg-zinc-50/70 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800">
         <div className="flex items-center justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-800/80 pb-2">
-          <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider font-[family-name:var(--font-space-grotesk)]">
+          <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
             Divisi Pilihan 2
           </span>
         </div>

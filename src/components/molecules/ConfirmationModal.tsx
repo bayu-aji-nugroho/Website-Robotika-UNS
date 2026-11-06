@@ -75,7 +75,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
           <h3
             id="confirm-modal-title"
-            className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]"
+            className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight"
           >
             {title}
           </h3>

@@ -80,7 +80,7 @@ export const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-3 sm:space-y-5 motion-safe:animate-rise [animation-delay:100ms]">
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-[1.15] font-[family-name:var(--font-space-grotesk)]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-[1.15]">
                 <span className="sr-only">Robotika Universitas Sebelas Maret</span>
                 <DrawnText line={heroTitleRobotika} delay={0.1} stagger={0.07} className="text-[#B22234] dark:text-[#EE3B47]" />
                 <span className="block text-2xl sm:text-4xl lg:text-5xl mt-0.5 sm:mt-1">

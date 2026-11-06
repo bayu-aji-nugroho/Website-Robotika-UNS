@@ -76,7 +76,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
             <p className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400 print:text-black">
               UKM Robotika Universitas Sebelas Maret
             </p>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 print:text-black tracking-tight font-[family-name:var(--font-space-grotesk)]">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 print:text-black tracking-tight">
               Tanda Terima Pendaftaran Calon Anggota
             </h1>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 print:text-zinc-700">
@@ -124,7 +124,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
         <div className="p-4 sm:p-6 md:p-7 space-y-6">
           {/* Kelompok Identitas Calon Anggota */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3.5 font-[family-name:var(--font-space-grotesk)]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3.5">
               Data Identitas Mahasiswa
             </h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 text-xs sm:text-sm">
@@ -167,7 +167,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
 
           {/* Kelompok Pilihan Divisi */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3.5 font-[family-name:var(--font-space-grotesk)]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-3.5">
               Pilihan Divisi Robotika
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

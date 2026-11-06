@@ -40,7 +40,7 @@ export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps>
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight font-['League_Spartan',sans-serif]">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight">
               Pendaftaran Ditutup
             </h2>
             <p className="text-xs sm:text-sm text-[#52525b] dark:text-zinc-400 max-w-lg leading-relaxed">

@@ -84,7 +84,7 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#B22234] text-white text-xs font-bold shrink-0">
               2
             </span>
-            <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-[family-name:var(--font-space-grotesk)]">
+            <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Autentikasi Akun Google
             </h2>
           </div>
