@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ NavUserMenu.tsx ] 
-fungsi [ Komponen molekul menu avatar pengguna di Navbar dengan popover informasi profil dan opsi logout tunggal. ]
+fungsi [ Komponen molekul menu avatar pengguna di Navbar dengan popover informasi profil, tautan dashboard akun, dan opsi logout. ]
 -----------------------------------------------
 */
 
@@ -9,7 +9,8 @@ fungsi [ Komponen molekul menu avatar pengguna di Navbar dengan popover informas
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LayoutDashboard, LogOut } from "lucide-react";
 import { GoogleAuthUser } from "@/src/services";
 
 export interface NavUserMenuProps {
@@ -97,7 +98,16 @@ export const NavUserMenu: React.FC<NavUserMenuProps> = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-0.5">
+            <Link
+              href="/dashboard"
+              onClick={() => setIsOpen(false)}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <span>Dashboard Akun</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => {

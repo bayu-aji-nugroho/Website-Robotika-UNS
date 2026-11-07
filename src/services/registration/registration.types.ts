@@ -167,6 +167,7 @@ export interface RegistrationProgressData {
   status: RegistrationStatus | "none";
   currentStep: number;
   record?: SupabaseRegistrationRecord | null;
+  error?: string;
 }
 
 export interface RegistrationApiResponse {

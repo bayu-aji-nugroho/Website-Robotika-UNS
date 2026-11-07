@@ -169,7 +169,7 @@ export async function getRegistrationProgress(): Promise<RegistrationProgressDat
 
     if (error) {
       console.warn("Gagal mengambil progress dari Edge Function:", error);
-      return { hasRecord: false, status: "none", currentStep: 1 };
+      return { hasRecord: false, status: "none", currentStep: 1, error: error.message };
     }
 
     if (data?.success && data?.data) {
@@ -185,7 +185,8 @@ export async function getRegistrationProgress(): Promise<RegistrationProgressDat
     return { hasRecord: false, status: "none", currentStep: 1 };
   } catch (err) {
     console.warn("Exception getRegistrationProgress:", err);
-    return { hasRecord: false, status: "none", currentStep: 1 };
+    const message = err instanceof Error ? err.message : "Gagal mengambil progres pendaftaran.";
+    return { hasRecord: false, status: "none", currentStep: 1, error: message };
   }
 }
 

@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ Navbar.tsx ] 
-fungsi [ Komponen navigasi bar utama di bagian atas halaman dengan logo brand, tautan navigasi, tombol pendaftaran, avatar profil pengguna terautentikasi (dengan aksi logout saja), dan menu responsif mobile ]
+fungsi [ Komponen navigasi bar utama di bagian atas halaman dengan logo brand, tautan navigasi, tombol pendaftaran, avatar profil pengguna terautentikasi (dengan tautan dashboard akun dan logout), dan menu responsif mobile ]
 -----------------------------------------------
 */
 
@@ -12,7 +12,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container, ThemeToggle } from "../atoms";
 import { NavBrand, NavLinks, NavUserMenu } from "../molecules";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import {
   GoogleAuthUser,
   getAuthenticatedUser,
@@ -102,7 +102,7 @@ export const Navbar: React.FC = () => {
                 Daftar Sekarang
               </Link>
 
-              {/* Avatar Profil Pengguna (Hanya Logout) */}
+              {/* Avatar Profil Pengguna (Dashboard & Logout) */}
               {user && (
                 <NavUserMenu user={user} onLogout={handleLogout} />
               )}
@@ -159,6 +159,18 @@ export const Navbar: React.FC = () => {
                   >
                     Daftar Sekarang
                   </Link>
+
+                  {/* Opsi Dashboard Mobile jika sedang Login */}
+                  {user && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-800 rounded-md transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span>Dashboard Akun</span>
+                    </Link>
+                  )}
 
                   {/* Opsi Logout Mobile jika sedang Login */}
                   {user && (
