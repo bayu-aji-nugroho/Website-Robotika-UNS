@@ -23,7 +23,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
   data,
 }) => {
   const [copied, setCopied] = useState(false);
-  const waGroupUrl = "https://chat.whatsapp.com/invite/robotika-uns-2026";
+  const waGroupUrl = "https://chat.whatsapp.com/IrhwomqdfALFGEz15JdmAq";
 
   const handleCopyId = async () => {
     if (!data.registrationId) return;
