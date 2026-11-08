@@ -84,30 +84,6 @@ export const teamList: DivisionItem[] = [
 
 export const techList: DivisionItem[] = [
   {
-    id: "riset",
-    name: "Riset",
-    category: "Divisi Teknis",
-    type: "teknis",
-    badge: "Kajian Regulasi & Analisis Sistem",
-    tagline: "Kajian Regulasi Lomba, Analisis Kebutuhan Sistem, dan Perumusan Konsep Rancang Bangun Robot",
-    desc: "Mempelajari regulasi kompetisi, menganalisis kebutuhan teknis sistem, dan merumuskan konsep rancang bangun sebelum tahap produksi.",
-    fullDesc:
-      "Divisi Riset mengkaji regulasi perlombaan robotika, menganalisis kelayakan teknis sistem, dan merumuskan spesifikasi awal rancang bangun robot. Divisi ini menyelaraskan aturan kompetisi dengan kebutuhan perancangan mekanik, elektronika, dan pemrograman agar arah pengembangan robot terencana dan sesuai target pertandingan.",
-    responsibilities: [
-      "Mempelajari dan menganalisis buku aturan (rulebook) resmi kompetisi robotika.",
-      "Menilai kebutuhan sistem dan kelayakan komponen sebelum tahap produksi dan fabrikasi.",
-      "Merumuskan parameter teknis rancang bangun bersama divisi mekanika, elektronika, dan pemrograman.",
-      "Menyusun dokumentasi teknis dan laporan evaluasi kesiapan robot.",
-    ],
-    skills: [
-      "Analisis Regulasi Kompetisi",
-      "Kajian Kelayakan Teknis",
-      "Perumusan Spesifikasi Sistem",
-      "Dokumentasi & Logbook Teknis",
-    ],
-    tags: ["Regulasi Lomba", "Analisis Sistem", "Spesifikasi Teknis"],
-  },
-  {
     id: "pemrograman",
     name: "Pemrograman",
     category: "Divisi Teknis",

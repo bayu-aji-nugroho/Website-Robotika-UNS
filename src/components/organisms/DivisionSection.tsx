@@ -13,7 +13,6 @@ import { Container, Reveal, SkeletonReveal } from "../atoms";
 import { useLandingReveal } from "@/src/context";
 import { teamList, techList, nonTechList } from "@/data/divisions";
 import {
-  Search,
   Code,
   Cpu,
   Wrench,
@@ -31,8 +30,6 @@ function getItemIcon(id: string) {
     case "werkudara":
     case "cakrawala":
       return <Bot className="h-5 w-5 transition-colors" />;
-    case "riset":
-      return <Search className="h-4 w-4 transition-colors" />;
     case "pemrograman":
       return <Code className="h-4 w-4 transition-colors" />;
     case "elektronika":
