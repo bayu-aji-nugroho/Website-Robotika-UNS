@@ -10,7 +10,7 @@ fungsi [ Komponen template halaman pengumuman hasil OPREC Robotika UNS dengan ma
 import React, { useState, useEffect, useCallback } from "react";
 import { Container, ThemeToggle } from "../atoms";
 import { NavUserMenu } from "../molecules";
-import { AnnouncementResultCard } from "../organisms";
+import { AnnouncementPendingCard, AnnouncementResultCard } from "../organisms";
 import {
   GoogleAuthUser,
   getAuthenticatedUser,
@@ -19,34 +19,54 @@ import {
   formatSupabaseUser,
   ApplicantAnnouncementData,
   getApplicantAnnouncement,
+  getAdminSettings,
+  isAnnouncementOpen,
 } from "@/src/services";
+
+// Batas setTimeout browser ~24,8 hari; cukup jadwalkan muat ulang otomatis bila < 1 hari
+const AUTO_RELOAD_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+async function fetchAnnouncementPage() {
+  try {
+    const [user, settings] = await Promise.all([getAuthenticatedUser(), getAdminSettings()]);
+    const announcement = await getApplicantAnnouncement();
+    return { user, settings, announcement, fetchedAt: Date.now() };
+  } catch (err) {
+    console.error("Gagal memuat status pengumuman:", err);
+    return null;
+  }
+}
 
 export const AnnouncementTemplate: React.FC = () => {
   const [user, setUser] = useState<GoogleAuthUser | null>(null);
   const [announcementData, setAnnouncementData] = useState<ApplicantAnnouncementData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [announcementAt, setAnnouncementAt] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const u = await getAuthenticatedUser();
-      setUser(u);
-
-      const res = await getApplicantAnnouncement();
-      setIsAuthenticated(res.isAuthenticated);
-      setAnnouncementData(res.data);
-    } catch (err) {
-      console.error("Gagal memuat status pengumuman:", err);
-    } finally {
-      setIsLoading(false);
+  const applyData = useCallback((result: Awaited<ReturnType<typeof fetchAnnouncementPage>>) => {
+    if (result) {
+      setUser(result.user);
+      setAnnouncementAt(result.settings.announcement_at ?? null);
+      setIsOpen(isAnnouncementOpen(result.settings, result.fetchedAt));
+      setIsAuthenticated(result.announcement.isAuthenticated);
+      setAnnouncementData(result.announcement.data);
     }
+    setIsLoading(false);
   }, []);
+
+  const loadData = useCallback(() => {
+    setIsLoading(true);
+    return fetchAnnouncementPage().then(applyData);
+  }, [applyData]);
 
   useEffect(() => {
     let isMounted = true;
 
-    loadData();
+    fetchAnnouncementPage().then((result) => {
+      if (isMounted) applyData(result);
+    });
 
     const {
       data: { subscription },
@@ -77,7 +97,18 @@ export const AnnouncementTemplate: React.FC = () => {
       subscription.unsubscribe();
       window.removeEventListener("supabase-auth-signout", handleSignoutEvent);
     };
-  }, [loadData]);
+  }, [applyData, loadData]);
+
+  // Muat ulang otomatis tepat saat waktu pengumuman tiba (bila halaman sedang dibuka)
+  useEffect(() => {
+    if (isOpen || !announcementAt) return;
+    const delay = new Date(announcementAt).getTime() - Date.now();
+    if (delay <= 0 || delay > AUTO_RELOAD_WINDOW_MS) return;
+    const timer = window.setTimeout(() => {
+      loadData();
+    }, delay + 1000);
+    return () => window.clearTimeout(timer);
+  }, [announcementAt, isOpen, loadData]);
 
   const handleLogout = async () => {
     await signOutUser();
@@ -103,12 +134,16 @@ export const AnnouncementTemplate: React.FC = () => {
 
             {/* Konten Kartu Status Pengumuman */}
             <section aria-label="Status Hasil OPREC">
-              <AnnouncementResultCard
-                isAuthenticated={isAuthenticated}
-                data={announcementData}
-                isLoading={isLoading}
-                onRefresh={loadData}
-              />
+              {!isLoading && !isOpen ? (
+                <AnnouncementPendingCard announcementAt={announcementAt} onRefresh={loadData} />
+              ) : (
+                <AnnouncementResultCard
+                  isAuthenticated={isAuthenticated}
+                  data={announcementData}
+                  isLoading={isLoading}
+                  onRefresh={loadData}
+                />
+              )}
             </section>
           </div>
         </Container>

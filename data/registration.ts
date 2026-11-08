@@ -45,7 +45,7 @@ export const nonTechnicalDivisions: DivisionOption[] = [
   },
   {
     id: "bendahara",
-    name: "Bendahara",
+    name: "Keuangan",
     category: "non-teknis",
   },
   {
@@ -55,12 +55,12 @@ export const nonTechnicalDivisions: DivisionOption[] = [
   },
   {
     id: "media-branding",
-    name: "Media Branding",
+    name: "Media Visual",
     category: "non-teknis",
   },
   {
     id: "humas",
-    name: "Humas (Hubungan Masyarakat)",
+    name: "Hubeks (Hubungan Eksternal)",
     category: "non-teknis",
   },
 ];
@@ -115,10 +115,22 @@ export interface RegistrationRequirementsContent {
 
 export const registrationRequirements: RegistrationRequirementItem[] = [
   {
-    title: "Terdaftar sebagai mahasiswa aktif UNS jenjang Sarjana maupun Vokasi angkatan 2025 dan 2026.",
+    title: "Bertaqwa kepada Tuhan Yang Maha Esa.",
   },
   {
-    title: "Boleh mendaftar dari seluruh program studi di UNS tanpa terkecuali.",
+    title: "Mahasiswa/i aktif UNS angkatan 2025/2026.",
+  },
+  {
+    title: "Berkomitmen, bertanggung jawab, berintegritas dan berkomunikasi dengan baik kepada anggota lainnya.",
+  },
+  {
+    title: "Memiliki semangat dan kemauan belajar yang tinggi.",
+  },
+  {
+    title: "Mau bekerja sama dalam tim, tanpa ego sektoral.",
+  },
+  {
+    title: "Bersedia mengikuti pelatihan, piket riset, dan agenda kepengurusan.",
   },
 ];
 

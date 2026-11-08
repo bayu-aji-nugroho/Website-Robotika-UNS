@@ -21,6 +21,27 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
   },
 });
 
+// Pengaman sesi basi: getSession() hanya membaca sesi tersimpan di browser tanpa
+// memastikan akunnya masih ada. Bila akun sudah dihapus dari server (mis. setelah
+// pembersihan data uji), bersihkan sesi lokal sekali saat halaman dimuat agar
+// pengguna langsung kembali ke tombol login, bukan melihat akun lama yang tidak valid.
+if (typeof window !== "undefined") {
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { error } = await supabase.auth.getUser();
+    if (!error) return;
+    const status = (error as { status?: number }).status;
+    const isMissingUser =
+      status === 401 ||
+      status === 403 ||
+      /not found|does not exist|session.*(missing|not found)|invalid/i.test(error.message);
+    if (isMissingUser) {
+      await supabase.auth.signOut({ scope: "local" });
+      window.dispatchEvent(new Event("supabase-auth-signout"));
+    }
+  });
+}
+
 export interface GoogleAuthUser {
   id: string;
   email?: string;

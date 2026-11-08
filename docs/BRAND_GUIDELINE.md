@@ -130,10 +130,10 @@ Tipografi seluruh website kini menggunakan font tunggal teroptimasi **Plus Jakar
 | **Elektronika** | `<Cpu />` | Sirkuit PCB, sensor, aktuator, dan power delivery |
 | **Mekanika** | `<Wrench />` | Rancang bangun CAD, fabrikasi, dan chassis |
 | **Administrasi** | `<FileText />` | Tata kelola dokumen, persuratan resmi, dan perizinan |
-| **Bendahara** | `<Wallet />` | Anggaran dana kompetisi, sponsor, dan keuangan |
+| **Keuangan** | `<Wallet />` | Anggaran dana kompetisi, sponsor, dan keuangan |
 | **Pengembangan Organisasi** | `<Compass />` | Kaderisasi, kepemimpinan, dan arah tim |
-| **Media & Branding** | `<Camera />` | Dokumentasi, konten kreatif, dan feed medsos |
-| **Humas** | `<Share2 />` | Relasi eksternal, kemitraan sponsor, dan alumni |
+| **Media Visual** | `<Camera />` | Dokumentasi, konten kreatif, dan feed medsos |
+| **Hubeks** | `<Share2 />` | Relasi eksternal, kemitraan sponsor, dan alumni |
 
 ### 5.3 Aturan Fotografi & Aset Visual
 - **Subjek**: Foto aktivitas nyata bengkel robotika, robot tanding, proses perakitan, dan kompetisi KRI resmi.

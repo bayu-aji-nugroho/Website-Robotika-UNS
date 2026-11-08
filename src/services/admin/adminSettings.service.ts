@@ -11,6 +11,8 @@ export interface AdminSettings {
   id: number;
   is_oprec: boolean;
   label: string;
+  /** Waktu hasil seleksi boleh dilihat calon anggota. null = belum ditentukan. */
+  announcement_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -29,7 +31,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
   try {
     const { data, error } = await supabase
       .from("admin_settings")
-      .select("id, is_oprec, label, created_at, updated_at")
+      .select("id, is_oprec, label, announcement_at, created_at, updated_at")
       .eq("id", 1)
       .maybeSingle();
 
@@ -44,6 +46,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       id: data.id ?? 1,
       is_oprec: Boolean(data.is_oprec),
       label: data.label || DEFAULT_ADMIN_SETTINGS.label,
+      announcement_at: data.announcement_at ?? null,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -51,4 +54,10 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     console.error("Kesalahan koneksi saat mengambil admin_settings:", err);
     return DEFAULT_ADMIN_SETTINGS;
   }
+}
+
+/** true bila waktu pengumuman hasil seleksi sudah tiba. */
+export function isAnnouncementOpen(settings: Pick<AdminSettings, "announcement_at">, nowMs: number): boolean {
+  if (!settings.announcement_at) return false;
+  return new Date(settings.announcement_at).getTime() <= nowMs;
 }

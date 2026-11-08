@@ -214,14 +214,14 @@ export const nonTechList: DivisionItem[] = [
   },
   {
     id: "bendahara",
-    name: "Bendahara",
+    name: "Keuangan",
     category: "Divisi Nonteknis",
     type: "non-teknis",
     badge: "Keuangan & Akuntabilitas Kas",
     tagline: "Pengelolaan Arus Kas, Perencanaan Anggaran Riset, dan Laporan Pertanggungjawaban Finansial",
     desc: "Mengelola arus kas masuk dan keluar, menyusun Rencana Anggaran Belanja (RAB), dan menyusun Laporan Pertanggungjawaban (LPJ) keuangan.",
     fullDesc:
-      "Divisi Bendahara mengelola stabilitas finansial dan aset material organisasi. Divisi ini bertanggung jawab mencatat arus kas masuk dan keluar secara teliti, menyusun Rencana Anggaran Belanja (RAB) untuk kegiatan dan riset robotika, mengawasi kelayakan alokasi pengeluaran dana, mengarsipkan bukti transaksi, serta menyusun Laporan Pertanggungjawaban (LPJ) keuangan secara transparan dan akuntabel.",
+      "Divisi Keuangan mengelola stabilitas finansial dan aset material organisasi. Divisi ini bertanggung jawab mencatat arus kas masuk dan keluar secara teliti, menyusun Rencana Anggaran Belanja (RAB) untuk kegiatan dan riset robotika, mengawasi kelayakan alokasi pengeluaran dana, mengarsipkan bukti transaksi, serta menyusun Laporan Pertanggungjawaban (LPJ) keuangan secara transparan dan akuntabel.",
     responsibilities: [
       "Mencatat arus kas masuk dan keluar secara teratur dan teliti.",
       "Menyusun Rencana Anggaran Belanja (RAB) untuk operasional kegiatan dan kebutuhan riset.",
@@ -264,14 +264,14 @@ export const nonTechList: DivisionItem[] = [
   },
   {
     id: "humas",
-    name: "Humas",
+    name: "Hubeks",
     category: "Divisi Nonteknis",
     type: "non-teknis",
     badge: "Relasi Eksternal & Sponsorship",
     tagline: "Komunikasi Eksternal, Penjajakan Kemitraan Sponsorship, dan Kolaborasi Antar-Kampus",
     desc: "Mengelola komunikasi dengan pihak eksternal, menjajaki kemitraan sponsorship dan media partner, serta mengoordinasikan studi banding.",
     fullDesc:
-      "Divisi Hubungan Masyarakat (Humas) bertugas mengelola komunikasi publik dan membangun jejaring kerja sama kelembagaan. Divisi ini menjalin relasi dengan instansi pemerintah, perguruan tinggi lain, dan mitra industri, menjalankan lobi sponsorship untuk pendanaan maupun kebutuhan material riset, serta mengoordinasikan agenda studi banding dengan laboratorium robotika universitas lain.",
+      "Divisi Hubungan Eksternal (Hubeks) bertugas mengelola komunikasi eksternal dan membangun jejaring kerja sama kelembagaan. Divisi ini menjalin relasi dengan instansi pemerintah, perguruan tinggi lain, dan mitra industri, menjalankan lobi sponsorship untuk pendanaan maupun kebutuhan material riset, serta mengoordinasikan agenda studi banding dengan laboratorium robotika universitas lain.",
     responsibilities: [
       "Menyusun strategi komunikasi publik serta mengelola hubungan dengan pihak eksternal (instansi, kampus lain, industri).",
       "Menjalankan lobi kemitraan sponsorship untuk dukungan pendanaan dan material riset.",
@@ -288,14 +288,14 @@ export const nonTechList: DivisionItem[] = [
   },
   {
     id: "media-branding",
-    name: "Media Branding",
+    name: "Media Visual",
     category: "Divisi Nonteknis",
     type: "non-teknis",
     badge: "Identitas Visual & Konten Digital",
     tagline: "Pedoman Visual, Desain Grafis, Dokumentasi Foto dan Video, serta Publikasi Media Digital",
     desc: "Merumuskan brand guidelines, mendesain materi publikasi visual, memproduksi foto dan video kegiatan, serta mengelola media sosial organisasi.",
     fullDesc:
-      "Divisi Media Branding bertanggung jawab atas identitas visual dan publikasi media organisasi. Divisi ini merumuskan pedoman visual (brand guidelines), memproduksi materi desain grafis dan video untuk dokumentasi riset serta kegiatan, dan mengelola saluran media publikasi digital agar informasi tersaji secara teratur, jelas, dan konsisten.",
+      "Divisi Media Visual bertanggung jawab atas identitas visual dan publikasi media organisasi. Divisi ini merumuskan pedoman visual (brand guidelines), memproduksi materi desain grafis dan video untuk dokumentasi riset serta kegiatan, dan mengelola saluran media publikasi digital agar informasi tersaji secara teratur, jelas, dan konsisten.",
     responsibilities: [
       "Merumuskan panduan visual (brand guidelines) dan merancang desain konten media sosial.",
       "Memproduksi foto serta video untuk dokumentasi riset laboratorium dan agenda kegiatan.",

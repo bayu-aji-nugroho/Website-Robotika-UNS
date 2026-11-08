@@ -10,6 +10,7 @@ export * from "./HeroSection";
 export * from "./AboutSection";
 export * from "./DivisionSection";
 export * from "./ContactFooter";
+export * from "./RegisterGuideButton";
 export * from "./login";
 export * from "./registration";
 export * from "./announcement";

@@ -23,12 +23,18 @@ import { RegistrationConfirmModals } from "./RegistrationConfirmModals";
 import { useRegistrationForm } from "./useRegistrationForm";
 import { MAX_FILE_SIZE, isGoogleDriveUrl } from "./registrationValidation";
 import { registrationSteps } from "@/data/registration";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Eye } from "lucide-react";
 
 const REGISTRATION_STEPS: RegistrationStepItem[] = registrationSteps;
 
-export const RegistrationForm: React.FC = () => {
+interface RegistrationFormProps {
+  /** Mode preview lokal (hanya berlaku saat development): isian tidak disimpan ke Supabase */
+  previewMode?: boolean;
+}
+
+export const RegistrationForm: React.FC<RegistrationFormProps> = ({ previewMode = false }) => {
   const {
+    isPreview,
     currentStep,
     setCurrentStep,
     maxReachableStep,
@@ -94,10 +100,21 @@ export const RegistrationForm: React.FC = () => {
     confirmModalType,
     setConfirmModalType,
     getDivisionName,
-  } = useRegistrationForm();
+  } = useRegistrationForm({ previewMode });
 
   return (
     <div className="space-y-3.5 sm:space-y-6 md:space-y-8 print:space-y-0">
+      {/* Banner Mode Preview Lokal (khusus development) */}
+      {isPreview && (
+        <div className="p-3.5 sm:p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-sm print:hidden">
+          <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <p>
+            <span className="font-semibold">Mode Preview Lokal.</span> Semua langkah bisa dibuka dan isian
+            bisa diganti bebas. Tidak ada data yang disimpan atau dikirim ke Supabase.
+          </p>
+        </div>
+      )}
+
       {/* Toast Alert saat Progres Berhasil Dimuat Kembali */}
       {restoreMessage && (
         <div className="p-3.5 sm:p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-3 text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 shadow-sm animate-fade-in">

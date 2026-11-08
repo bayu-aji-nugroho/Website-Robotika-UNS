@@ -22,6 +22,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { Skeleton } from "@/src/components/atoms";
+import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 import {
   DivisionSelectionCategory,
   GoogleAuthUser,
@@ -331,6 +332,8 @@ const RegistrationDetails: React.FC<{
           )}
         </div>
       </div>
+
+      {isSubmitted && <InterviewSchedulePicker />}
 
       {isSubmitted && (
         <div className="flex justify-end">

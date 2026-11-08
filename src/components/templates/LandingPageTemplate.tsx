@@ -3,7 +3,14 @@
 import React from "react";
 import { MotionConfig } from "framer-motion";
 import { LandingRevealProvider } from "@/src/context";
-import { Navbar, HeroSection, AboutSection, DivisionSection, ContactFooter } from "../organisms";
+import {
+  Navbar,
+  HeroSection,
+  AboutSection,
+  DivisionSection,
+  ContactFooter,
+  RegisterGuideButton,
+} from "../organisms";
 
 export const LandingPageTemplate: React.FC = () => {
   return (
@@ -17,6 +24,7 @@ export const LandingPageTemplate: React.FC = () => {
             <DivisionSection />
           </main>
           <ContactFooter />
+          <RegisterGuideButton />
         </div>
       </LandingRevealProvider>
     </MotionConfig>

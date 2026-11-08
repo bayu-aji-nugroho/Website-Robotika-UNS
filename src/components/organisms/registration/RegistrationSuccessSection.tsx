@@ -13,6 +13,7 @@ import { Copy, Check, FileText, ArrowLeft, ExternalLink, Link2 } from "lucide-re
 import { SubmissionReceiptData } from "@/src/services";
 import { WhatsAppIcon } from "@/src/components/atoms";
 import { ADMIN_WA_CONFIG } from "@/data/registration";
+import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 
 export interface RegistrationSuccessSectionProps {
   data: SubmissionReceiptData;
@@ -68,7 +69,10 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
         </div>
       </div>
 
-      {/* 2. Kartu Dokumen Tanda Terima Resmi (Berada di Bawah Link WA) */}
+      {/* 2. Pemilihan Jadwal Wawancara */}
+      <InterviewSchedulePicker />
+
+      {/* 3. Kartu Dokumen Tanda Terima Resmi (Berada di Bawah Link WA) */}
       <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm print:border-none print:shadow-none print:p-0 overflow-hidden transition-colors">
         {/* Kop Dokumen Akademis */}
         <div className="p-4 sm:p-6 md:p-7 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/50 print:bg-white print:border-b-2 print:border-black">

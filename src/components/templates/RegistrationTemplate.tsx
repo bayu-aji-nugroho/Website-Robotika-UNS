@@ -10,7 +10,11 @@ fungsi [ Komponen template halaman pendaftaran calon anggota baru dengan pengece
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { RegistrationForm, RegistrationClosedBlocker } from "../organisms";
+import {
+  RegistrationForm,
+  RegistrationClosedBlocker,
+  IS_REGISTRATION_PREVIEW_AVAILABLE,
+} from "../organisms";
 import { Container, ThemeToggle } from "../atoms";
 import { NavUserMenu } from "../molecules";
 import {
@@ -101,7 +105,10 @@ export const RegistrationTemplate: React.FC<RegistrationTemplateProps> = ({
 
             <section aria-label="Gerbang Pendaftaran Anggota">
               {settings.is_oprec ? (
-                <RegistrationForm />
+                <RegistrationForm key="live" />
+              ) : IS_REGISTRATION_PREVIEW_AVAILABLE ? (
+                // Lokal (next dev) saat OPREC ditutup: buka form dalam mode preview tanpa simpan
+                <RegistrationForm key="preview" previewMode />
               ) : (
                 <RegistrationClosedBlocker label={settings.label} />
               )}

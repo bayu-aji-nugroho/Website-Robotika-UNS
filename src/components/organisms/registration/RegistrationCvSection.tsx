@@ -10,7 +10,15 @@ fungsi [ Komponen langkah kelima (Upload Berkas) formulir pendaftaran untuk meng
 import React from "react";
 import { FileUploadDropzone, FormField } from "@/src/components/molecules";
 import { Checkbox, ErrorMessage, Button, Input } from "@/src/components/atoms";
-import { ArrowLeft, ArrowRight, Lock, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, ExternalLink, Download } from "lucide-react";
+
+// Template CV (Word) disajikan dari folder public/templates
+const CV_TEMPLATE_FILE_NAME = "TEMPLETE_CV_OPREC_ROBOTIKA.docx";
+const CV_TEMPLATE_URL = `/templates/${CV_TEMPLATE_FILE_NAME}`;
+
+// Tautan twibbon & berkas upload OPREC
+const TWIBBON_LABEL = "uns.id/BerkasUploadOprecStaffRobotikaUNS2027";
+const TWIBBON_URL = `https://${TWIBBON_LABEL}`;
 
 export interface RegistrationCvSectionProps {
   file: File | null;
@@ -102,13 +110,23 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
         </div>
 
         {!isLocked ? (
-          <FileUploadDropzone
-            file={file}
-            onFileSelect={onFileSelect}
-            onFileRemove={onFileRemove}
-            error={error}
-            maxSizeBytes={maxSizeBytes}
-          />
+          <>
+            <FileUploadDropzone
+              file={file}
+              onFileSelect={onFileSelect}
+              onFileRemove={onFileRemove}
+              error={error}
+              maxSizeBytes={maxSizeBytes}
+            />
+            <a
+              href={CV_TEMPLATE_URL}
+              download={CV_TEMPLATE_FILE_NAME}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B22234] dark:text-red-400 hover:text-[#8B0000] dark:hover:text-red-300 hover:underline underline-offset-2 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Unduh Template CV</span>
+            </a>
+          </>
         ) : (
           <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-center text-xs text-zinc-500 dark:text-zinc-400">
             Berkas CV telah diunggah dan diverifikasi pada sistem pendaftaran.
@@ -134,30 +152,44 @@ export const RegistrationCvSection: React.FC<RegistrationCvSectionProps> = ({
             error={twibbonError || undefined}
           >
             {!isLocked ? (
-              <div className="relative">
-                <Input
-                  id="reg-twibbon-url"
-                  type="url"
-                  value={twibbonUrl}
-                  onChange={(e) => onTwibbonUrlChange(e.target.value)}
-                  onBlur={onTwibbonUrlBlur}
-                  placeholder="https://drive.google.com/..."
-                  error={Boolean(twibbonError)}
-                  disabled={isSubmitting}
-                  className="pr-9"
-                />
-                {twibbonUrl && (
+              <>
+                <div className="relative">
+                  <Input
+                    id="reg-twibbon-url"
+                    type="url"
+                    value={twibbonUrl}
+                    onChange={(e) => onTwibbonUrlChange(e.target.value)}
+                    onBlur={onTwibbonUrlBlur}
+                    placeholder="https://drive.google.com/..."
+                    error={Boolean(twibbonError)}
+                    disabled={isSubmitting}
+                    className="pr-9"
+                  />
+                  {twibbonUrl && (
+                    <a
+                      href={twibbonUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
+                      title="Uji buka tautan"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                  Twibbon:{" "}
                   <a
-                    href={twibbonUrl}
+                    href={TWIBBON_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
-                    title="Uji buka tautan"
+                    className="inline-flex items-center gap-1 font-semibold text-[#B22234] dark:text-red-400 hover:text-[#8B0000] dark:hover:text-red-300 hover:underline underline-offset-2 transition-colors break-all"
                   >
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    {TWIBBON_LABEL}
+                    <ExternalLink className="w-3 h-3 shrink-0" />
                   </a>
-                )}
-              </div>
+                </p>
+              </>
             ) : (
               <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
                 <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[80%] font-mono text-[11px] sm:text-xs">

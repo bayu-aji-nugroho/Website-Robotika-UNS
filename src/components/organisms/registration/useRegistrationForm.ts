@@ -40,7 +40,20 @@ import {
   calculateMaxReachableStep,
 } from "./registrationValidation";
 
-export function useRegistrationForm() {
+/**
+ * Mode preview lokal: hanya bisa aktif saat `next dev` (NODE_ENV development).
+ * Di build production nilai ini selalu false, sehingga gerbang OPREC tetap berlaku.
+ */
+export const IS_REGISTRATION_PREVIEW_AVAILABLE = process.env.NODE_ENV === "development";
+
+interface UseRegistrationFormOptions {
+  /** Jika true, seluruh aksi simpan/kirim dilewati (tidak ada request mutasi ke Supabase) */
+  previewMode?: boolean;
+}
+
+export function useRegistrationForm({ previewMode = false }: UseRegistrationFormOptions = {}) {
+  const isPreview = IS_REGISTRATION_PREVIEW_AVAILABLE && previewMode;
+
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Step 1: Syarat (tanpa checkbox persetujuan, default true)
@@ -102,7 +115,9 @@ export function useRegistrationForm() {
   }, []);
 
   // KETENTUAN IMMUTABILITY: Penguncian permanen HANYA setelah Langkah 5 (Submit Final)
-  const isFullySubmitted = savedRecord?.status === "submitted" || Boolean(submissionSuccess);
+  // Mode preview tidak pernah mengunci form agar isian bisa diganti-ganti bebas
+  const isFullySubmitted =
+    !isPreview && (savedRecord?.status === "submitted" || Boolean(submissionSuccess));
   const isIdentityLocked = isFullySubmitted;
   const isDivisionLocked = isFullySubmitted;
 
@@ -151,6 +166,13 @@ export function useRegistrationForm() {
     if (record.twibbon_url) setTwibbonUrl(record.twibbon_url);
     if (record.portfolio_url) setPortfolioUrl(record.portfolio_url);
 
+    // Mode preview: cukup isi field dari data akun, tanpa mengunci atau melompat langkah
+    if (isPreview) {
+      setRestoreMessage("Mode preview: data akun dimuat dari Supabase. Perubahan tidak akan disimpan.");
+      setTimeout(() => setRestoreMessage(null), 6000);
+      return;
+    }
+
     if (record.status === "submitted") {
       const receiptNim = record.nim || "";
       const detectedFaculty =
@@ -196,7 +218,7 @@ export function useRegistrationForm() {
     setCurrentStep(nextStep);
     setRestoreMessage("Progres pendaftaran tersimpan berhasil dimuat kembali.");
     setTimeout(() => setRestoreMessage(null), 6000);
-  }, []);
+  }, [isPreview]);
 
   // Listener sesi Google Supabase saat load awal, setelah OAuth redirect, atau saat logout
   useEffect(() => {
@@ -272,6 +294,7 @@ export function useRegistrationForm() {
 
   // Validasi Step 2: Akun Google
   const validateStep2 = (): boolean => {
+    if (isPreview) return true;
     return validateStep2Util(authUser);
   };
 
@@ -318,6 +341,7 @@ export function useRegistrationForm() {
   };
 
   const maxReachableStep = useMemo<number>(() => {
+    if (isPreview) return submissionSuccess ? 6 : 5;
     return calculateMaxReachableStep({
       hasSubmissionSuccess: Boolean(submissionSuccess),
       agreedToRequirements,
@@ -361,6 +385,7 @@ export function useRegistrationForm() {
     portfolioUrl,
     isMediaSelected,
     cvAgreement,
+    isPreview,
   ]);
 
   const handleCategoryMode1Change = (newCat: DivisionCategory) => {
@@ -445,6 +470,13 @@ export function useRegistrationForm() {
    * Eksekusi Simpan Data Step 3 ke Supabase Database
    */
   const executeSaveStep3 = async () => {
+    if (isPreview) {
+      setErrors({});
+      setCurrentStep(4);
+      scrollToTop();
+      return;
+    }
+
     setIsSavingStep(true);
     setErrors((prev) => {
       const copy = { ...prev };
@@ -516,6 +548,13 @@ export function useRegistrationForm() {
    * Eksekusi Simpan Data Step 4 ke Supabase Database
    */
   const executeSaveStep4 = async () => {
+    if (isPreview) {
+      setErrors({});
+      setCurrentStep(5);
+      scrollToTop();
+      return;
+    }
+
     setIsSavingStep(true);
     setErrors((prev) => {
       const copy = { ...prev };
@@ -715,7 +754,16 @@ export function useRegistrationForm() {
         agreedToCvTruth: cvAgreement,
       };
 
-      const result = await submitRegistration(input);
+      // Mode preview: lewati pengiriman ke Supabase dan tampilkan tanda terima simulasi
+      const result = isPreview
+        ? {
+            success: true,
+            data: null,
+            registrationCode: savedRecord?.registration_code || "PREVIEW-LOKAL",
+            error: undefined,
+            message: undefined,
+          }
+        : await submitRegistration(input);
 
       if (!result.success) {
         setConfirmModalType(null);
@@ -814,6 +862,15 @@ export function useRegistrationForm() {
     if (isFullySubmitted) return;
     if (stepId === currentStep) return;
 
+    // Mode preview: navigasi bebas antar langkah tanpa validasi
+    if (isPreview) {
+      if (stepId <= maxReachableStep) {
+        setCurrentStep(stepId);
+        scrollToTop();
+      }
+      return;
+    }
+
     if (stepId < currentStep) {
       setCurrentStep(stepId);
       scrollToTop();
@@ -867,6 +924,9 @@ export function useRegistrationForm() {
   };
 
   return {
+    // Mode Preview Lokal
+    isPreview,
+
     // Navigasi & Langkah
     currentStep,
     setCurrentStep,
