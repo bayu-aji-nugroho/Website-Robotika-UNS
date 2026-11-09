@@ -42,6 +42,83 @@ if (typeof window !== "undefined") {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Pembatasan login calon anggota: hanya email SSO mahasiswa UNS.
+// Lapis 1: parameter `hd` di Google OAuth (pemilih akun hanya menawarkan domain ini).
+// Lapis 2: sesi dengan email lain langsung dikeluarkan di sini + pesan ditampilkan.
+// Lapis 3: database menolak data pendaftaran dari email lain (trigger applicants).
+// ---------------------------------------------------------------------------
+export const ALLOWED_APPLICANT_EMAIL_DOMAIN = "student.uns.ac.id";
+
+export function isAllowedApplicantEmail(email?: string | null): boolean {
+  return Boolean(email && email.trim().toLowerCase().endsWith(`@${ALLOWED_APPLICANT_EMAIL_DOMAIN}`));
+}
+
+const SSO_REJECTED_KEY = "robotika_uns_sso_rejected_email";
+let ssoRejectedEmail: string | null = null;
+const ssoRejectionListeners = new Set<() => void>();
+
+function notifySsoRejection() {
+  ssoRejectionListeners.forEach((listener) => listener());
+}
+
+/** Email non-SSO terakhir yang ditolak (untuk ditampilkan sebagai pesan), atau null. */
+export function getSsoRejectedEmail(): string | null {
+  if (ssoRejectedEmail === null && typeof window !== "undefined") {
+    try {
+      ssoRejectedEmail = sessionStorage.getItem(SSO_REJECTED_KEY);
+    } catch {
+      // sessionStorage tidak tersedia
+    }
+  }
+  return ssoRejectedEmail;
+}
+
+export function subscribeSsoRejection(listener: () => void): () => void {
+  ssoRejectionListeners.add(listener);
+  return () => ssoRejectionListeners.delete(listener);
+}
+
+export function clearSsoRejection() {
+  ssoRejectedEmail = null;
+  try {
+    sessionStorage.removeItem(SSO_REJECTED_KEY);
+  } catch {
+    // abaikan
+  }
+  notifySsoRejection();
+}
+
+async function rejectNonSsoSession(email: string) {
+  ssoRejectedEmail = email;
+  try {
+    sessionStorage.setItem(SSO_REJECTED_KEY, email);
+  } catch {
+    // abaikan
+  }
+  await supabase.auth.signOut({ scope: "local" });
+  window.dispatchEvent(new Event("supabase-auth-signout"));
+  notifySsoRejection();
+}
+
+if (typeof window !== "undefined") {
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    const email = session?.user?.email;
+    if (session && !isAllowedApplicantEmail(email)) {
+      rejectNonSsoSession(email || "akun ini");
+    }
+  });
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event !== "SIGNED_IN" || !session) return;
+    if (!isAllowedApplicantEmail(session.user.email)) {
+      // Ditunda agar tidak memanggil signOut di dalam callback auth itu sendiri
+      setTimeout(() => rejectNonSsoSession(session.user.email || "akun ini"), 0);
+    } else if (getSsoRejectedEmail()) {
+      clearSsoRejection();
+    }
+  });
+}
+
 export interface GoogleAuthUser {
   id: string;
   email?: string;
@@ -78,6 +155,8 @@ export async function signInWithGoogle(redirectTo?: string) {
       queryParams: {
         access_type: "offline",
         prompt: "consent",
+        // Pemilih akun Google hanya menawarkan akun SSO mahasiswa UNS
+        hd: ALLOWED_APPLICANT_EMAIL_DOMAIN,
       },
     },
   });
@@ -101,7 +180,8 @@ export async function getAuthenticatedUser(): Promise<GoogleAuthUser | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      return formatSupabaseUser(session.user);
+      // Sesi non-SSO diperlakukan seperti belum login (dikeluarkan oleh pengaman di atas)
+      return isAllowedApplicantEmail(session.user.email) ? formatSupabaseUser(session.user) : null;
     }
   } catch (error) {
     console.warn("Gagal membaca sesi Supabase:", error);

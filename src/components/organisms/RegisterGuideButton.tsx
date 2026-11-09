@@ -23,9 +23,9 @@ const GUIDE_STEPS: GuideStep[] = [
     description: "Buka halaman Daftar, baca syarat dan tahapan seleksi, lalu centang persetujuan.",
   },
   {
-    title: "Masuk dengan Akun Google",
+    title: "Masuk dengan email SSO UNS",
     description:
-      "Gunakan akun Google yang aktif. Akun ini juga dipakai untuk memilih jadwal wawancara dan melihat hasil seleksi.",
+      "Login Google wajib memakai email SSO mahasiswa @student.uns.ac.id (akun lain ditolak). Akun ini juga dipakai untuk memilih jadwal wawancara dan melihat hasil seleksi.",
   },
   {
     title: "Isi identitas mahasiswa",

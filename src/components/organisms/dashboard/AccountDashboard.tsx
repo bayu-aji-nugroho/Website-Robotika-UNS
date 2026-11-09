@@ -369,7 +369,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
       <MessageCard
         icon={<LogIn className="w-14 h-14 text-zinc-700 dark:text-zinc-300" />}
         title="Masuk untuk Melihat Dashboard"
-        message="Gunakan Akun Google yang didaftarkan saat pengisian formulir pendaftaran."
+        message="Gunakan email SSO @student.uns.ac.id yang didaftarkan saat pengisian formulir pendaftaran."
       >
         <button
           type="button"
