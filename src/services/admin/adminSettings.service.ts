@@ -13,6 +13,9 @@ export interface AdminSettings {
   label: string;
   /** Waktu hasil seleksi boleh dilihat calon anggota. null = belum ditentukan. */
   announcement_at?: string | null;
+  /** Jadwal OPREC otomatis. Bila salah satu diisi, status buka/tutup mengikuti jadwal. */
+  oprec_open_at?: string | null;
+  oprec_close_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -31,7 +34,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
   try {
     const { data, error } = await supabase
       .from("admin_settings")
-      .select("id, is_oprec, label, announcement_at, created_at, updated_at")
+      .select("id, is_oprec, label, announcement_at, oprec_open_at, oprec_close_at, created_at, updated_at")
       .eq("id", 1)
       .maybeSingle();
 
@@ -47,6 +50,8 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       is_oprec: Boolean(data.is_oprec),
       label: data.label || DEFAULT_ADMIN_SETTINGS.label,
       announcement_at: data.announcement_at ?? null,
+      oprec_open_at: data.oprec_open_at ?? null,
+      oprec_close_at: data.oprec_close_at ?? null,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -54,6 +59,32 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     console.error("Kesalahan koneksi saat mengambil admin_settings:", err);
     return DEFAULT_ADMIN_SETTINGS;
   }
+}
+
+/**
+ * Status OPREC efektif saat ini (sama dengan fungsi database oprec_open_from_schedule):
+ * bila jadwal buka/tutup diisi, ikuti jadwal; bila kosong, ikuti toggle is_oprec.
+ */
+export function isOprecOpenNow(
+  settings: Pick<AdminSettings, "is_oprec" | "oprec_open_at" | "oprec_close_at">,
+  nowMs: number
+): boolean {
+  const openAt = settings.oprec_open_at ? new Date(settings.oprec_open_at).getTime() : null;
+  const closeAt = settings.oprec_close_at ? new Date(settings.oprec_close_at).getTime() : null;
+  if (openAt === null && closeAt === null) return Boolean(settings.is_oprec);
+  return (openAt === null || nowMs >= openAt) && (closeAt === null || nowMs < closeAt);
+}
+
+/** Waktu pergantian status OPREC berikutnya (buka atau tutup) setelah nowMs, bila ada. */
+export function nextOprecChangeMs(
+  settings: Pick<AdminSettings, "oprec_open_at" | "oprec_close_at">,
+  nowMs: number
+): number | null {
+  const times = [settings.oprec_open_at, settings.oprec_close_at]
+    .filter((v): v is string => Boolean(v))
+    .map((v) => new Date(v).getTime())
+    .filter((t) => t > nowMs);
+  return times.length ? Math.min(...times) : null;
 }
 
 /** true bila waktu pengumuman hasil seleksi sudah tiba. */

@@ -7,13 +7,13 @@ fungsi [ Komponen hero section beranda yang menampilkan tagline utama, deskripsi
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 import { Container, DrawnText, SkeletonReveal } from "../atoms";
 import { HeroVisual } from "../molecules";
 import { heroTitleRobotika, heroTitleUniversity } from "@/data/heroTitlePaths";
-import { AdminSettings, DEFAULT_ADMIN_SETTINGS, getAdminSettings } from "@/src/services";
+import { getAdminSettings } from "@/src/services";
 import { useLandingReveal } from "@/src/context";
 
 // Selaras dengan animasi gambar judul; batas maksimal mencegah skeleton tertahan jika foto gagal dimuat
@@ -21,13 +21,12 @@ const SKELETON_MIN_MS = 1800;
 const SKELETON_MAX_MS = 4000;
 
 export const HeroSection: React.FC = () => {
-  const [settings, setSettings] = useState<AdminSettings>(DEFAULT_ADMIN_SETTINGS);
   const { ready, markReady } = useLandingReveal();
   useEffect(() => {
     let isMounted = true;
-    const settingsLoaded = getAdminSettings().then((s) => {
-      if (isMounted) setSettings(s);
-    });
+    // Status OPREC ditampilkan oleh notifikasi di bawah navbar (OprecOpenBanner);
+    // pengaturan tetap dimuat di sini agar skeleton hero menunggu data siap.
+    const settingsLoaded = getAdminSettings();
 
     const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -66,19 +65,6 @@ export const HeroSection: React.FC = () => {
       <Container size="lg" className="relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 items-center">
           <div className="lg:col-span-6 space-y-4 sm:space-y-6 text-left">
-            <div className="motion-safe:animate-rise">
-              <SkeletonReveal ready={ready} className="inline-flex" skeletonClassName="rounded-md">
-                <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-md border border-[#e4e4e7] dark:border-zinc-800/80 bg-white dark:bg-[#1a1b20] text-xs shadow-xs">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider bg-[#B22234] dark:bg-[#C52233] text-white">
-                    OPREC
-                  </span>
-                  <span className="text-[#52525b] dark:text-zinc-300 font-medium text-xs">
-                    {settings.label}
-                  </span>
-                </div>
-              </SkeletonReveal>
-            </div>
-
             <div className="space-y-3 sm:space-y-5 motion-safe:animate-rise [animation-delay:100ms]">
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight leading-[1.15]">
                 <span className="sr-only">Robotika Universitas Sebelas Maret</span>

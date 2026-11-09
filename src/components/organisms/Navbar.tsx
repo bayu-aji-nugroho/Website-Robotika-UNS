@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Container, ThemeToggle } from "../atoms";
 import { NavBrand, NavLinks, NavUserMenu } from "../molecules";
 import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { OprecOpenBanner } from "./OprecOpenBanner";
 import {
   GoogleAuthUser,
   getAuthenticatedUser,
@@ -80,6 +81,8 @@ export const Navbar: React.FC = () => {
           : "py-3.5 sm:py-6"
       }`}
     >
+      {/* Notifikasi OPREC dibuka, menempel tepat di bawah navbar */}
+      <OprecOpenBanner hidden={mobileMenuOpen} />
       <Container size="lg">
         <div className="flex items-center justify-between">
           <NavBrand />

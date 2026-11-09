@@ -13,7 +13,25 @@ import { AdminWhatsAppButton } from "@/src/components/molecules";
 
 interface RegistrationClosedBlockerProps {
   label?: string;
+  /** Jadwal OPREC otomatis (opsional) untuk menampilkan tanggal buka/tutup */
+  openAt?: string | null;
+  closeAt?: string | null;
+  /** Waktu acuan perhitungan (ms). null = belum dimuat */
+  nowMs?: number | null;
 }
+
+const formatScheduleTime = (iso: string) => {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
+  return `${date} pukul ${time} WIB`;
+};
 
 const InstagramIcon = () => (
   <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -23,7 +41,22 @@ const InstagramIcon = () => (
 
 export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps> = ({
   label = "Informasi pendaftaran segera diumumkan",
+  openAt = null,
+  closeAt = null,
+  nowMs = null,
 }) => {
+  const notYetOpen = Boolean(openAt && nowMs !== null && new Date(openAt).getTime() > nowMs);
+  const alreadyClosed = Boolean(closeAt && nowMs !== null && new Date(closeAt).getTime() <= nowMs);
+
+  const title = notYetOpen ? "Pendaftaran Belum Dibuka" : "Pendaftaran Ditutup";
+  const message = notYetOpen
+    ? `Pendaftaran akan dibuka pada ${formatScheduleTime(openAt!)}${
+        closeAt ? ` dan ditutup pada ${formatScheduleTime(closeAt)}` : ""
+      }.`
+    : alreadyClosed
+    ? `Pendaftaran telah ditutup pada ${formatScheduleTime(closeAt!)}. Terima kasih atas antusiasmenya!`
+    : "Pantau jadwal pembukaan pendaftaran berikutnya di Instagram resmi @uns_robotika.";
+
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       {/* Kartu Utama Blocker */}
@@ -41,10 +74,10 @@ export const RegistrationClosedBlocker: React.FC<RegistrationClosedBlockerProps>
 
           <div className="space-y-1.5">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181b] dark:text-zinc-100 tracking-tight">
-              Pendaftaran Ditutup
+              {title}
             </h2>
             <p className="text-xs sm:text-sm text-[#52525b] dark:text-zinc-400 max-w-lg leading-relaxed">
-              Pantau jadwal pembukaan pendaftaran berikutnya di Instagram resmi @uns_robotika.
+              {message}
             </p>
           </div>
 

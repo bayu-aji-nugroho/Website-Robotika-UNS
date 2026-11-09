@@ -26,7 +26,12 @@ import {
   AdminSettings,
   DEFAULT_ADMIN_SETTINGS,
   getAdminSettings,
+  isOprecOpenNow,
+  nextOprecChangeMs,
 } from "@/src/services";
+
+// Batas setTimeout browser ~24,8 hari; cukup jadwalkan pergantian otomatis bila < 1 hari
+const AUTO_SWITCH_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 interface RegistrationTemplateProps {
   initialSettings?: AdminSettings | null;
@@ -39,13 +44,28 @@ export const RegistrationTemplate: React.FC<RegistrationTemplateProps> = ({
   const [settings, setSettings] = useState<AdminSettings>(
     initialSettings || DEFAULT_ADMIN_SETTINGS
   );
+  // Waktu terakhir status dihitung; diperbarui saat data dimuat & saat jadwal berganti
+  const [checkedAt, setCheckedAt] = useState<number | null>(null);
+  const isOpen = checkedAt === null ? Boolean(settings.is_oprec) : isOprecOpenNow(settings, checkedAt);
+
+  // Ganti tampilan tepat saat OPREC dibuka/ditutup bila halaman sedang terbuka
+  useEffect(() => {
+    if (checkedAt === null) return;
+    const next = nextOprecChangeMs(settings, checkedAt);
+    if (next === null || next - checkedAt > AUTO_SWITCH_WINDOW_MS) return;
+    const timer = window.setTimeout(() => setCheckedAt(Date.now()), next - checkedAt + 1000);
+    return () => window.clearTimeout(timer);
+  }, [settings, checkedAt]);
 
   useEffect(() => {
     let isMounted = true;
 
     // Ambil konfigurasi status OPREC terpusat dari database
     getAdminSettings().then((s) => {
-      if (isMounted) setSettings(s);
+      if (isMounted) {
+        setSettings(s);
+        setCheckedAt(Date.now());
+      }
     });
 
     getAuthenticatedUser().then((u) => {
@@ -104,13 +124,18 @@ export const RegistrationTemplate: React.FC<RegistrationTemplateProps> = ({
             <h1 className="sr-only">Pendaftaran Calon Anggota Robotika UNS</h1>
 
             <section aria-label="Gerbang Pendaftaran Anggota">
-              {settings.is_oprec ? (
+              {isOpen ? (
                 <RegistrationForm key="live" />
               ) : IS_REGISTRATION_PREVIEW_AVAILABLE ? (
                 // Lokal (next dev) saat OPREC ditutup: buka form dalam mode preview tanpa simpan
                 <RegistrationForm key="preview" previewMode />
               ) : (
-                <RegistrationClosedBlocker label={settings.label} />
+                <RegistrationClosedBlocker
+                  label={settings.label}
+                  openAt={settings.oprec_open_at ?? null}
+                  closeAt={settings.oprec_close_at ?? null}
+                  nowMs={checkedAt}
+                />
               )}
             </section>
           </div>
