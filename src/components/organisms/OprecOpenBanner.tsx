@@ -63,18 +63,14 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.35, ease: "easeOut", delay: 0.4 }}
-            className="pointer-events-auto flex items-center gap-2 sm:gap-3 max-w-full pl-3 pr-1.5 py-1.5 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+            className="pointer-events-auto flex items-center gap-2 sm:gap-3 max-w-full pl-3.5 pr-1.5 py-1.5 rounded bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
           >
-            <span className="relative flex size-2 shrink-0" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-safe:animate-ping" />
-              <span className="relative inline-flex size-2 rounded-full bg-white" />
-            </span>
             <span className="text-xs sm:text-sm font-semibold truncate">
               Open Recruitment dibuka, silakan daftar!
             </span>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1 shrink-0 px-2.5 sm:px-3 py-1 rounded-full bg-white text-emerald-700 text-[11px] sm:text-xs font-bold hover:bg-emerald-50 transition-colors"
+              className="inline-flex items-center gap-1 shrink-0 px-2.5 sm:px-3 py-1 rounded-sm bg-white text-emerald-700 text-[11px] sm:text-xs font-bold hover:bg-emerald-50 transition-colors"
             >
               Daftar
               <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -83,7 +79,7 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
               type="button"
               onClick={handleDismiss}
               aria-label="Tutup notifikasi"
-              className="shrink-0 p-1 rounded-full text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+              className="shrink-0 p-1 rounded-sm text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
             >
               <X className="size-3.5" />
             </button>
