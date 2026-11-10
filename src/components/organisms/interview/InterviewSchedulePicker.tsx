@@ -22,6 +22,7 @@ import { WhatsAppIcon } from "@/src/components/atoms";
 import { InterviewSlotPicker } from "@/src/components/organisms/interview/InterviewSlotPicker";
 import { ADMIN_WA_CONFIG } from "@/data/registration";
 import {
+  INTERVIEW_SLOT_MINUTES,
   InterviewBooking,
   InterviewSlot,
   acceptInterviewBooking,
@@ -44,7 +45,7 @@ const formatDate = (iso: string) =>
 
 const formatHourRange = (iso: string) => {
   const start = new Date(iso);
-  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const end = new Date(start.getTime() + INTERVIEW_SLOT_MINUTES * 60 * 1000);
   const fmt = (d: Date) =>
     d.toLocaleTimeString("id-ID", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
   return `${fmt(start)}–${fmt(end)} WIB`;
@@ -141,6 +142,10 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
   };
 
   const isAccepted = booking?.status === "accepted";
+  // Hanya pewawancara yang sudah mengisi No. WhatsApp; kosong -> kontak NIA sebagai cadangan
+  const interviewerContacts = (booking?.interviewer_contacts || []).filter(
+    (c): c is { name: string; whatsapp: string } => Boolean(c.whatsapp)
+  );
   const showSlotList = !isAccepted && (!booking || isChanging);
 
   return (
@@ -154,7 +159,7 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
             Jadwal Wawancara
           </h2>
         </div>
-        {!isAccepted && (
+        {(!isAccepted || !booking?.location) && (
           <button
             type="button"
             onClick={handleReload}
@@ -210,33 +215,71 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
                   <Users className="w-3.5 h-3.5 shrink-0" />
                   <span>Pewawancara: {booking.interviewers.join(" & ") || "-"}</span>
                 </p>
-                {booking.location && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 flex items-start gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 flex items-start gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  {booking.location ? (
                     <LocationText location={booking.location} />
-                  </p>
-                )}
+                  ) : isAccepted ? (
+                    <span>Tempat belum ditentukan, konfirmasi ke pewawancara di bawah.</span>
+                  ) : (
+                    <span>Tempat dikonfirmasi ke pewawancara setelah jadwal di-Accept.</span>
+                  )}
+                </p>
               </div>
 
               {isAccepted ? (
-                <div className="pt-2.5 border-t border-emerald-200/70 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                    {CONFIRM_CONTACT_LABEL}
-                  </span>
-                  <a
-                    href={ADMIN_WA_CONFIG.getUrl(
-                      `Halo kak Nia, saya mengonfirmasi jadwal wawancara OPREC Robotika UNS pada ${formatDate(
-                        booking.start_at
-                      )}, pukul ${formatHourRange(booking.start_at)}.`
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1faa4f] text-white text-[11px] font-semibold transition-colors shadow-xs"
-                  >
-                    <WhatsAppIcon className="w-3.5 h-3.5" />
-                    <span>Hubungi via WhatsApp</span>
-                  </a>
-                </div>
+                interviewerContacts.length > 0 ? (
+                  <div className="pt-2.5 border-t border-emerald-200/70 dark:border-emerald-900/50 space-y-2">
+                    <span className="block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      {booking.location
+                        ? "Hubungi pewawancara bila ada pertanyaan:"
+                        : "Konfirmasi tempat ke pewawancara, hubungi salah satu nomor berikut:"}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {interviewerContacts.map((c) => (
+                        <a
+                          key={c.whatsapp}
+                          href={`https://wa.me/${c.whatsapp}?text=${encodeURIComponent(
+                            `Halo kak ${c.name}, saya calon anggota OPREC Robotika UNS dengan jadwal wawancara pada ${formatDate(
+                              booking.start_at
+                            )}, pukul ${formatHourRange(booking.start_at)}. ${
+                              booking.location
+                                ? "Saya ingin mengonfirmasi kehadiran saya."
+                                : "Saya ingin mengonfirmasi tempat wawancaranya."
+                            }`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1faa4f] text-white text-[11px] font-semibold transition-colors shadow-xs"
+                        >
+                          <WhatsAppIcon className="w-3.5 h-3.5" />
+                          <span>WhatsApp {c.name}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2.5 border-t border-emerald-200/70 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      {CONFIRM_CONTACT_LABEL}
+                    </span>
+                    <a
+                      href={ADMIN_WA_CONFIG.getUrl(
+                        `Halo kak Nia, saya mengonfirmasi jadwal wawancara OPREC Robotika UNS pada ${formatDate(
+                          booking.start_at
+                        )}, pukul ${formatHourRange(booking.start_at)}.${
+                          booking.location ? "" : " Boleh minta info tempat wawancaranya?"
+                        }`
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1faa4f] text-white text-[11px] font-semibold transition-colors shadow-xs"
+                    >
+                      <WhatsAppIcon className="w-3.5 h-3.5" />
+                      <span>Hubungi via WhatsApp</span>
+                    </a>
+                  </div>
+                )
               ) : confirmingAccept ? (
                 <div className="pt-2.5 border-t border-amber-200/70 dark:border-amber-900/50 space-y-2">
                   <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
@@ -300,7 +343,7 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 {booking
                   ? "Pilih jadwal pengganti. Jadwal lama otomatis dilepas."
-                  : "Pilih pewawancara, lalu tanggal dan jam wawancara (60 menit). Anda masih bisa menggantinya sebelum menekan Accept."}
+                  : `Pilih pewawancara, lalu tanggal dan jam wawancara (${INTERVIEW_SLOT_MINUTES} menit). Anda masih bisa menggantinya sebelum menekan Accept.`}
               </p>
 
               <InterviewSlotPicker

@@ -9,7 +9,7 @@ fungsi [ Pemilih jadwal wawancara 3 langkah untuk calon anggota: (1) pilih pasan
 
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
-import type { InterviewSlot } from "@/src/services";
+import { INTERVIEW_SLOT_MINUTES, type InterviewSlot } from "@/src/services";
 
 const TIME_ZONE = "Asia/Jakarta";
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
@@ -36,7 +36,7 @@ const formatLongDate = (dateStr: string) =>
 
 const formatHourRange = (iso: string) => {
   const start = new Date(iso);
-  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const end = new Date(start.getTime() + INTERVIEW_SLOT_MINUTES * 60 * 1000);
   const fmt = (d: Date) =>
     d.toLocaleTimeString("id-ID", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
   return `${fmt(start)}–${fmt(end)}`;
