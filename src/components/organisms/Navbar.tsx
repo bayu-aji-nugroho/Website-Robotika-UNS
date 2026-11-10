@@ -11,7 +11,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container, ThemeToggle } from "../atoms";
-import { NavBrand, NavLinks, NavUserMenu } from "../molecules";
+import { NavBrand, NavLinks, NavNotificationBell, NavUserMenu } from "../molecules";
 import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import { OprecOpenBanner } from "./OprecOpenBanner";
 import {
@@ -105,6 +105,9 @@ export const Navbar: React.FC = () => {
                 Daftar Sekarang
               </Link>
 
+              {/* Lonceng notifikasi pengumuman dari admin */}
+              {user && <NavNotificationBell key={user.id} />}
+
               {/* Avatar Profil Pengguna (Dashboard & Logout) */}
               {user && (
                 <NavUserMenu user={user} onLogout={handleLogout} />
@@ -116,6 +119,7 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile Right Controls */}
           <div className="flex items-center gap-2 md:hidden">
+            {user && <NavNotificationBell key={user.id} />}
             {user && (
               <NavUserMenu user={user} onLogout={handleLogout} />
             )}
