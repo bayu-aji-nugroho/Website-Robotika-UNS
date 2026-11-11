@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Copy, Check, FileText, ArrowLeft, ExternalLink, Link2 } from "lucide-react";
 import { SubmissionReceiptData } from "@/src/services";
 import { WhatsAppIcon } from "@/src/components/atoms";
-import { ADMIN_WA_CONFIG } from "@/data/registration";
+import { ADMIN_WA_CONFIG, CANDIDATE_WA_GROUP_URL } from "@/data/registration";
 import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 
 export interface RegistrationSuccessSectionProps {
@@ -24,7 +24,6 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
   data,
 }) => {
   const [copied, setCopied] = useState(false);
-  const waGroupUrl = "https://chat.whatsapp.com/IrhwomqdfALFGEz15JdmAq";
 
   const handleCopyId = async () => {
     if (!data.registrationId) return;
@@ -46,7 +45,7 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
       <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 print:hidden shadow-xs transition-colors">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           <a
-            href={waGroupUrl}
+            href={CANDIDATE_WA_GROUP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#1faa4f] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"

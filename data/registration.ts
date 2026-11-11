@@ -208,6 +208,10 @@ export interface AdminWaConfig {
   getUrl: (customMessage?: string) => string;
 }
 
+/** Link undangan grup WhatsApp calon anggota (dipakai di halaman sukses & Dashboard Akun) */
+export const CANDIDATE_WA_GROUP_URL =
+  process.env.NEXT_PUBLIC_CANDIDATE_WA_GROUP_URL || "https://chat.whatsapp.com/IrhwomqdfALFGEz15JdmAq";
+
 export const ADMIN_WA_CONFIG: AdminWaConfig = {
   // Format nomor WhatsApp internasional resmi (diawali 62 tanpa tanda + atau spasi)
   number: process.env.NEXT_PUBLIC_ADMIN_WA_NUMBER || "628818525045",

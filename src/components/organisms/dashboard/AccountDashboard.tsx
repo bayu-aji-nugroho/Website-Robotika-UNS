@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/src/components/atoms";
 import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
+import { WhatsAppGroupCard } from "@/src/components/organisms/dashboard/WhatsAppGroupCard";
 import {
   DivisionSelectionCategory,
   GoogleAuthUser,
@@ -258,6 +259,9 @@ const RegistrationDetails: React.FC<{
           </div>
         )}
       </div>
+
+      {/* Pengingat gabung grup WhatsApp (banyak yang lupa setelah submit) */}
+      {isSubmitted && <WhatsAppGroupCard />}
 
       <div className={`${CARD_CLASS} p-4 sm:p-6 space-y-6`}>
         <div>
