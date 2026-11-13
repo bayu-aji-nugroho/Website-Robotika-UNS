@@ -22,6 +22,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { Skeleton } from "@/src/components/atoms";
+import { NonSsoLoginOption } from "@/src/components/molecules";
 import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 import { WhatsAppGroupCard } from "@/src/components/organisms/dashboard/WhatsAppGroupCard";
 import {
@@ -373,7 +374,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
       <MessageCard
         icon={<LogIn className="w-14 h-14 text-zinc-700 dark:text-zinc-300" />}
         title="Masuk untuk Melihat Dashboard"
-        message="Gunakan email SSO @student.uns.ac.id yang didaftarkan saat pengisian formulir pendaftaran."
+        message="Gunakan akun yang dipakai saat pengisian formulir pendaftaran (email SSO @student.uns.ac.id)."
       >
         <button
           type="button"
@@ -384,6 +385,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
           <LogIn className="w-4 h-4" />
           <span>{isLoggingIn ? "Menghubungkan..." : "Masuk dengan Google"}</span>
         </button>
+        <NonSsoLoginOption redirectTo="/dashboard" />
       </MessageCard>
     );
   }

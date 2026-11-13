@@ -47,11 +47,29 @@ if (typeof window !== "undefined") {
 // Lapis 1: parameter `hd` di Google OAuth (pemilih akun hanya menawarkan domain ini).
 // Lapis 2: sesi dengan email lain langsung dikeluarkan di sini + pesan ditampilkan.
 // Lapis 3: database menolak data pendaftaran dari email lain (trigger applicants).
+// Pengecualian: email non-SSO yang di-whitelist admin (akun SSO bermasalah) tetap diizinkan,
+// dicek ke database lewat RPC am_i_allowed_applicant.
 // ---------------------------------------------------------------------------
 export const ALLOWED_APPLICANT_EMAIL_DOMAIN = "student.uns.ac.id";
 
 export function isAllowedApplicantEmail(email?: string | null): boolean {
   return Boolean(email && email.trim().toLowerCase().endsWith(`@${ALLOWED_APPLICANT_EMAIL_DOMAIN}`));
+}
+
+// Hasil cek whitelist per email (agar RPC tidak dipanggil berulang-ulang)
+const whitelistChecks = new Map<string, Promise<boolean>>();
+
+/** true bila email SSO, atau email non-SSO yang sudah di-whitelist admin. */
+export async function isApplicantAccessAllowed(email?: string | null): Promise<boolean> {
+  if (isAllowedApplicantEmail(email)) return true;
+  const key = (email || "").trim().toLowerCase();
+  if (!key) return false;
+  let check = whitelistChecks.get(key);
+  if (!check) {
+    check = Promise.resolve(supabase.rpc("am_i_allowed_applicant")).then(({ data, error }) => !error && data === true);
+    whitelistChecks.set(key, check);
+  }
+  return check;
 }
 
 const SSO_REJECTED_KEY = "robotika_uns_sso_rejected_email";
@@ -102,20 +120,23 @@ async function rejectNonSsoSession(email: string) {
 }
 
 if (typeof window !== "undefined") {
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
     const email = session?.user?.email;
-    if (session && !isAllowedApplicantEmail(email)) {
+    if (session && !(await isApplicantAccessAllowed(email))) {
       rejectNonSsoSession(email || "akun ini");
     }
   });
   supabase.auth.onAuthStateChange((event, session) => {
     if (event !== "SIGNED_IN" || !session) return;
-    if (!isAllowedApplicantEmail(session.user.email)) {
-      // Ditunda agar tidak memanggil signOut di dalam callback auth itu sendiri
-      setTimeout(() => rejectNonSsoSession(session.user.email || "akun ini"), 0);
-    } else if (getSsoRejectedEmail()) {
-      clearSsoRejection();
-    }
+    const email = session.user.email;
+    // Ditunda agar tidak memanggil RPC/signOut di dalam callback auth itu sendiri
+    setTimeout(async () => {
+      if (!(await isApplicantAccessAllowed(email))) {
+        rejectNonSsoSession(email || "akun ini");
+      } else if (getSsoRejectedEmail()) {
+        clearSsoRejection();
+      }
+    }, 0);
   });
 }
 
@@ -132,7 +153,13 @@ const LOCAL_STORAGE_MOCK_USER_KEY = "robotika_uns_mock_auth_user";
 /**
  * Memulai alur login dengan Akun Google melalui Supabase Auth
  */
-export async function signInWithGoogle(redirectTo?: string) {
+export async function signInWithGoogle(
+  redirectTo?: string,
+  options?: {
+    /** true = pemilih akun Google tidak dibatasi domain SSO (hanya untuk email yang di-whitelist admin) */
+    nonSso?: boolean;
+  }
+) {
   const origin =
     typeof window !== "undefined" && window.location.origin
       ? window.location.origin
@@ -152,12 +179,14 @@ export async function signInWithGoogle(redirectTo?: string) {
     provider: "google",
     options: {
       redirectTo: targetRedirect,
-      queryParams: {
-        access_type: "offline",
-        prompt: "consent",
-        // Pemilih akun Google hanya menawarkan akun SSO mahasiswa UNS
-        hd: ALLOWED_APPLICANT_EMAIL_DOMAIN,
-      },
+      queryParams: options?.nonSso
+        ? { access_type: "offline", prompt: "select_account consent" }
+        : {
+            access_type: "offline",
+            prompt: "consent",
+            // Pemilih akun Google hanya menawarkan akun SSO mahasiswa UNS
+            hd: ALLOWED_APPLICANT_EMAIL_DOMAIN,
+          },
     },
   });
 }
@@ -180,8 +209,8 @@ export async function getAuthenticatedUser(): Promise<GoogleAuthUser | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      // Sesi non-SSO diperlakukan seperti belum login (dikeluarkan oleh pengaman di atas)
-      return isAllowedApplicantEmail(session.user.email) ? formatSupabaseUser(session.user) : null;
+      // Sesi non-SSO yang tidak di-whitelist diperlakukan seperti belum login (dikeluarkan oleh pengaman di atas)
+      return (await isApplicantAccessAllowed(session.user.email)) ? formatSupabaseUser(session.user) : null;
     }
   } catch (error) {
     console.warn("Gagal membaca sesi Supabase:", error);

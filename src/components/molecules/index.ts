@@ -18,5 +18,6 @@ export * from "./NavUserMenu";
 export * from "./NavNotificationBell";
 export * from "./ConfirmationModal";
 export * from "./AdminWhatsAppButton";
+export * from "./NonSsoLoginOption";
 
 export * from "./HeroVisual";

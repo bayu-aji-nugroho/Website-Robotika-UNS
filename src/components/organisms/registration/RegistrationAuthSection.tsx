@@ -7,9 +7,10 @@ fungsi [ Komponen langkah kedua formulir pendaftaran untuk autentikasi akun Goog
 
 "use client";
 
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/src/components/atoms";
+import { NonSsoLoginOption } from "@/src/components/molecules";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,10 +21,8 @@ import {
 import {
   ALLOWED_APPLICANT_EMAIL_DOMAIN,
   GoogleAuthUser,
-  getSsoRejectedEmail,
   signInWithGoogle,
   signOutUser,
-  subscribeSsoRejection,
 } from "@/src/services";
 
 export interface RegistrationAuthSectionProps {
@@ -46,8 +45,6 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
   // Avatar gagal dimuat dicatat per URL, sehingga otomatis ter-reset saat akun berganti
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const avatarError = Boolean(user?.avatarUrl) && failedAvatarUrl === user?.avatarUrl;
-  // Email non-SSO yang baru saja ditolak (dikeluarkan otomatis oleh pengaman sesi)
-  const rejectedEmail = useSyncExternalStore(subscribeSsoRejection, getSsoRejectedEmail, () => null);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -129,22 +126,9 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                   @{ALLOWED_APPLICANT_EMAIL_DOMAIN}
                 </span>
-                . Akun Google lain tidak dapat digunakan untuk mendaftar.
+                . Akun Google lain tidak dapat digunakan untuk mendaftar, kecuali yang sudah didaftarkan panitia.
               </p>
             </div>
-
-            {rejectedEmail && (
-              <div className="max-w-md mx-auto p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-left text-xs text-red-700 dark:text-red-300 space-y-1.5">
-                <div className="flex items-center gap-1.5 font-semibold">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
-                  <span>Bukan email SSO UNS</span>
-                </div>
-                <p className="leading-relaxed">
-                  <span className="font-semibold break-all">{rejectedEmail}</span> tidak dapat digunakan.
-                  Silakan masuk kembali dengan email <strong>@{ALLOWED_APPLICANT_EMAIL_DOMAIN}</strong>.
-                </p>
-              </div>
-            )}
 
             {/* Error Message jika OAuth gagal/belum disetup */}
             {errorMessage && (
@@ -188,6 +172,8 @@ export const RegistrationAuthSection: React.FC<RegistrationAuthSectionProps> = (
                 <span>{isLoading ? "Menghubungkan..." : "Masuk dengan Google"}</span>
               </button>
             </div>
+
+            <NonSsoLoginOption />
           </div>
         </div>
       ) : (

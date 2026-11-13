@@ -23,6 +23,7 @@ import {
   ApplicantAnnouncementData,
   signInWithGoogle,
 } from "@/src/services";
+import { NonSsoLoginOption } from "@/src/components/molecules";
 
 interface AnnouncementResultCardProps {
   isAuthenticated: boolean;
@@ -74,7 +75,7 @@ export const AnnouncementResultCard: React.FC<AnnouncementResultCardProps> = ({
 
         {/* Baris 3: Pesan Ringkas */}
         <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-          Gunakan email SSO @student.uns.ac.id yang didaftarkan saat pengisian formulir pendaftaran seleksi.
+          Gunakan akun yang dipakai saat pengisian formulir pendaftaran seleksi (email SSO @student.uns.ac.id).
         </p>
 
         {/* Baris 4: Tombol Aksi */}
@@ -97,6 +98,8 @@ export const AnnouncementResultCard: React.FC<AnnouncementResultCardProps> = ({
             <span>{isLoggingIn ? "Menghubungkan..." : "Masuk dengan Google"}</span>
           </button>
         </div>
+
+        <NonSsoLoginOption redirectTo="/pengumuman" />
       </div>
     );
   }
