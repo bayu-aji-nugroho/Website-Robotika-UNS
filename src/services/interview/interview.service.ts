@@ -46,15 +46,24 @@ interface CompactInterviewSlots {
   locations: string[];
   /** [indeks pasangan, epoch detik, indeks lokasi | null] */
   slots: [number, number, number | null][];
+  /** Batas pemilihan jadwal (ISO) dari Pengaturan OPREC, null = tanpa batas */
+  deadline?: string | null;
+  /** true bila batas pemilihan sudah lewat */
+  closed?: boolean;
 }
 
-export async function getInterviewSlots(): Promise<InterviewResult<InterviewSlot[]>> {
+export interface InterviewSlotsResult extends InterviewResult<InterviewSlot[]> {
+  deadline: string | null;
+  closed: boolean;
+}
+
+export async function getInterviewSlots(): Promise<InterviewSlotsResult> {
   const { data, error } = await supabase.rpc("get_interview_slots_compact");
   if (error) {
-    return { data: [], error: toMessage(error, "Gagal memuat jadwal wawancara.") };
+    return { data: [], error: toMessage(error, "Gagal memuat jadwal wawancara."), deadline: null, closed: false };
   }
   const compact = data as CompactInterviewSlots | null;
-  if (!compact) return { data: [], error: null };
+  if (!compact) return { data: [], error: null, deadline: null, closed: false };
 
   const slots: InterviewSlot[] = [];
   for (const [pairIdx, epochSec, locIdx] of compact.slots || []) {
@@ -67,7 +76,7 @@ export async function getInterviewSlots(): Promise<InterviewResult<InterviewSlot
       interviewers: pair.interviewers,
     });
   }
-  return { data: slots, error: null };
+  return { data: slots, error: null, deadline: compact.deadline ?? null, closed: Boolean(compact.closed) };
 }
 
 export async function getMyInterviewBooking(): Promise<InterviewResult<InterviewBooking | null>> {

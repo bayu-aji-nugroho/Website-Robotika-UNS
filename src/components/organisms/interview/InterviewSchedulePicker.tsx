@@ -51,6 +51,13 @@ const formatHourRange = (iso: string) => {
   return `${fmt(start)}–${fmt(end)} WIB`;
 };
 
+const formatDeadline = (iso: string) =>
+  `${formatDate(iso)}, pukul ${new Date(iso).toLocaleTimeString("id-ID", {
+    timeZone: TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+  })} WIB`;
+
 const isLink = (value: string) => /^https?:\/\//i.test(value.trim());
 
 const LocationText: React.FC<{ location: string }> = ({ location }) =>
@@ -78,6 +85,9 @@ export interface InterviewSchedulePickerProps {
 
 export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = ({ className = "" }) => {
   const [slots, setSlots] = useState<InterviewSlot[]>([]);
+  // Batas pemilihan jadwal dari Pengaturan OPREC (null = tanpa batas)
+  const [deadline, setDeadline] = useState<string | null>(null);
+  const [isClosed, setIsClosed] = useState(false);
   const [booking, setBooking] = useState<InterviewBooking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -89,6 +99,8 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
 
   const applyResult = useCallback((result: Awaited<ReturnType<typeof fetchSchedule>>) => {
     setSlots(result.slots.data);
+    setDeadline(result.slots.deadline);
+    setIsClosed(result.slots.closed);
     setBooking(result.booking.data);
     setLoadError(result.slots.error || result.booking.error);
     setIsLoading(false);
@@ -146,7 +158,7 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
   const interviewerContacts = (booking?.interviewer_contacts || []).filter(
     (c): c is { name: string; whatsapp: string } => Boolean(c.whatsapp)
   );
-  const showSlotList = !isAccepted && (!booking || isChanging);
+  const showSlotList = !isAccepted && (!booking || isChanging) && !isClosed;
 
   return (
     <div
@@ -318,16 +330,57 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
                     <CalendarCheck className="w-3.5 h-3.5" />
                     <span>Accept Jadwal</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsChanging((v) => !v)}
-                    className="px-3.5 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-                  >
-                    {isChanging ? "Tutup Pilihan" : "Ganti Jadwal"}
-                  </button>
+                  {!isClosed && (
+                    <button
+                      type="button"
+                      onClick={() => setIsChanging((v) => !v)}
+                      className="px-3.5 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                    >
+                      {isChanging ? "Tutup Pilihan" : "Ganti Jadwal"}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
+          )}
+
+          {/* Batas pemilihan jadwal */}
+          {!isAccepted && isClosed && (
+            <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 space-y-2">
+              <p className="flex items-start gap-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Pemilihan jadwal wawancara sudah ditutup
+                  {deadline ? ` sejak ${formatDeadline(deadline)}` : ""}.
+                </span>
+              </p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {booking
+                  ? "Jadwal yang sudah Anda pilih tetap berlaku. Tekan Accept Jadwal untuk mengonfirmasinya."
+                  : "Anda belum memilih jadwal. Hubungi panitia OPREC bila ada kendala."}
+              </p>
+              {!booking && (
+                <a
+                  href={ADMIN_WA_CONFIG.getUrl(
+                    "Halo kak Nia, saya belum sempat memilih jadwal wawancara OPREC Robotika UNS sebelum batas waktunya. Apakah masih bisa dibantu?"
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1faa4f] text-white text-[11px] font-semibold transition-colors shadow-xs"
+                >
+                  <WhatsAppIcon className="w-3.5 h-3.5" />
+                  <span>Hubungi Panitia</span>
+                </a>
+              )}
+            </div>
+          )}
+          {!isAccepted && !isClosed && deadline && (
+            <p className="flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300">
+              <CalendarClock className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                Batas memilih jadwal: <strong>{formatDeadline(deadline)}</strong>
+              </span>
+            </p>
           )}
 
           {actionError && (
