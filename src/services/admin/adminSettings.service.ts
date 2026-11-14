@@ -16,6 +16,8 @@ export interface AdminSettings {
   /** Jadwal OPREC otomatis. Bila salah satu diisi, status buka/tutup mengikuti jadwal. */
   oprec_open_at?: string | null;
   oprec_close_at?: string | null;
+  /** Warna notifikasi "Open Recruitment dibuka" (#rrggbb). null = hijau bawaan. Diatur di admin. */
+  oprec_banner_color?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -34,7 +36,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
   try {
     const { data, error } = await supabase
       .from("admin_settings")
-      .select("id, is_oprec, label, announcement_at, oprec_open_at, oprec_close_at, created_at, updated_at")
+      .select("id, is_oprec, label, announcement_at, oprec_open_at, oprec_close_at, oprec_banner_color, created_at, updated_at")
       .eq("id", 1)
       .maybeSingle();
 
@@ -52,6 +54,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       announcement_at: data.announcement_at ?? null,
       oprec_open_at: data.oprec_open_at ?? null,
       oprec_close_at: data.oprec_close_at ?? null,
+      oprec_banner_color: data.oprec_banner_color ?? null,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -85,6 +88,26 @@ export function nextOprecChangeMs(
     .map((v) => new Date(v).getTime())
     .filter((t) => t > nowMs);
   return times.length ? Math.min(...times) : null;
+}
+
+/** Warna bawaan notifikasi OPREC (hijau), sama dengan admin (utils/bannerColor.ts) */
+export const DEFAULT_OPREC_BANNER_COLOR = "#059669";
+
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5]
+    .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Warna latar & teks notifikasi OPREC. Teks putih diutamakan selama kontrasnya >= 3:1,
+ * bila latar terlalu terang pakai teks hitam (logika sama dengan pratinjau di admin).
+ */
+export function getOprecBannerColors(color?: string | null): { background: string; text: string } {
+  const background = color && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : DEFAULT_OPREC_BANNER_COLOR;
+  const whiteContrast = 1.05 / (relativeLuminance(background) + 0.05);
+  return { background, text: whiteContrast >= 3 ? "#ffffff" : "#18181b" };
 }
 
 /** true bila waktu pengumuman hasil seleksi sudah tiba. */

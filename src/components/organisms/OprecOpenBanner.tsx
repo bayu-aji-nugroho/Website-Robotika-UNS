@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ OprecOpenBanner.tsx ]
-fungsi [ Notifikasi hijau yang meluncur dari bawah navbar saat Open Recruitment sedang dibuka (mengikuti status OPREC efektif, termasuk jadwal buka/tutup otomatis), dengan tombol daftar dan tombol tutup ]
+fungsi [ Notifikasi (warna diatur admin, bawaan hijau) yang meluncur dari bawah navbar saat Open Recruitment sedang dibuka (mengikuti status OPREC efektif, termasuk jadwal buka/tutup otomatis), dengan tombol daftar dan tombol tutup ]
 -----------------------------------------------
 */
 
@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
-import { getAdminSettings, isOprecOpenNow } from "@/src/services";
+import { getAdminSettings, getOprecBannerColors, isOprecOpenNow } from "@/src/services";
 
 // Notifikasi yang sudah ditutup tidak muncul lagi selama tab browser masih terbuka
 const DISMISS_KEY = "oprec_open_banner_dismissed";
@@ -31,11 +31,14 @@ export interface OprecOpenBannerProps {
 
 export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false }) => {
   const [visible, setVisible] = useState(false);
+  // Warna diatur admin di Pengaturan OPREC; teks putih/hitam menyesuaikan kontras
+  const [colors, setColors] = useState(() => getOprecBannerColors(null));
 
   useEffect(() => {
     let isMounted = true;
     getAdminSettings().then((settings) => {
       if (isMounted && isOprecOpenNow(settings, Date.now()) && !readDismissed()) {
+        setColors(getOprecBannerColors(settings.oprec_banner_color));
         setVisible(true);
       }
     });
@@ -63,14 +66,20 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.35, ease: "easeOut", delay: 0.4 }}
-            className="pointer-events-auto flex items-center gap-2 sm:gap-3 max-w-full pl-3.5 pr-1.5 py-1.5 rounded bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+            className="pointer-events-auto flex items-center gap-2 sm:gap-3 max-w-full pl-3.5 pr-1.5 py-1.5 rounded shadow-lg"
+            style={{
+              backgroundColor: colors.background,
+              color: colors.text,
+              boxShadow: `0 10px 15px -3px ${colors.background}4d`,
+            }}
           >
             <span className="text-xs sm:text-sm font-semibold truncate">
               Open Recruitment dibuka, silakan daftar!
             </span>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1 shrink-0 px-2.5 sm:px-3 py-1 rounded-sm bg-white text-emerald-700 text-[11px] sm:text-xs font-bold hover:bg-emerald-50 transition-colors"
+              className="inline-flex items-center gap-1 shrink-0 px-2.5 sm:px-3 py-1 rounded-sm text-[11px] sm:text-xs font-bold hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: colors.text, color: colors.background }}
             >
               Daftar
               <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -79,7 +88,7 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
               type="button"
               onClick={handleDismiss}
               aria-label="Tutup notifikasi"
-              className="shrink-0 p-1 rounded-sm text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+              className="shrink-0 p-1 rounded-sm opacity-80 hover:opacity-100 hover:bg-current/15 transition-opacity cursor-pointer"
             >
               <X className="size-3.5" />
             </button>
