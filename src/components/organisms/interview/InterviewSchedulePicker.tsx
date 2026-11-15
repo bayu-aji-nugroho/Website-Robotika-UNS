@@ -79,11 +79,46 @@ async function fetchSchedule() {
   return { slots, booking };
 }
 
-export interface InterviewSchedulePickerProps {
-  className?: string;
+/** Identitas calon anggota untuk template pesan WhatsApp konfirmasi */
+export interface InterviewApplicantIdentity {
+  name?: string | null;
+  nim?: string | null;
+  fakultas?: string | null;
+  prodi?: string | null;
 }
 
-export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = ({ className = "" }) => {
+/** Template pesan konfirmasi: perkenalan diri (nama, NIM, fakultas/prodi) + jadwal + tujuan */
+function buildConfirmMessage(
+  greeting: string,
+  applicant: InterviewApplicantIdentity | undefined,
+  booking: InterviewBooking,
+  purpose: string
+): string {
+  const facultyLine = [applicant?.fakultas, applicant?.prodi].filter(Boolean).join(" / ");
+  const identity = [
+    applicant?.name ? `Nama: ${applicant.name}` : null,
+    applicant?.nim ? `NIM: ${applicant.nim}` : null,
+    facultyLine ? `Fakultas/Prodi: ${facultyLine}` : null,
+  ].filter(Boolean);
+
+  return [
+    `Halo ${greeting}, perkenalkan saya calon anggota OPREC Robotika UNS.`,
+    ...(identity.length ? ["", ...identity] : []),
+    "",
+    `Jadwal wawancara: ${formatDate(booking.start_at)}, pukul ${formatHourRange(booking.start_at)}`,
+    "",
+    purpose,
+    "Terima kasih, kak.",
+  ].join("\n");
+}
+
+export interface InterviewSchedulePickerProps {
+  className?: string;
+  /** Identitas calon anggota, otomatis dicantumkan di pesan WhatsApp konfirmasi */
+  applicant?: InterviewApplicantIdentity;
+}
+
+export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = ({ className = "", applicant }) => {
   const [slots, setSlots] = useState<InterviewSlot[]>([]);
   // Batas pemilihan jadwal dari Pengaturan OPREC (null = tanpa batas)
   const [deadline, setDeadline] = useState<string | null>(null);
@@ -252,13 +287,14 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
                         <a
                           key={c.whatsapp}
                           href={`https://wa.me/${c.whatsapp}?text=${encodeURIComponent(
-                            `Halo kak ${c.name}, saya calon anggota OPREC Robotika UNS dengan jadwal wawancara pada ${formatDate(
-                              booking.start_at
-                            )}, pukul ${formatHourRange(booking.start_at)}. ${
+                            buildConfirmMessage(
+                              `kak ${c.name}`,
+                              applicant,
+                              booking,
                               booking.location
                                 ? "Saya ingin mengonfirmasi kehadiran saya."
-                                : "Saya ingin mengonfirmasi tempat wawancaranya."
-                            }`
+                                : "Saya ingin mengonfirmasi tempat wawancaranya, kira-kira di mana ya, kak?"
+                            )
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -277,11 +313,14 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
                     </span>
                     <a
                       href={ADMIN_WA_CONFIG.getUrl(
-                        `Halo kak Nia, saya mengonfirmasi jadwal wawancara OPREC Robotika UNS pada ${formatDate(
-                          booking.start_at
-                        )}, pukul ${formatHourRange(booking.start_at)}.${
-                          booking.location ? "" : " Boleh minta info tempat wawancaranya?"
-                        }`
+                        buildConfirmMessage(
+                          "kak Nia",
+                          applicant,
+                          booking,
+                          booking.location
+                            ? "Saya ingin mengonfirmasi jadwal wawancara saya."
+                            : "Saya ingin mengonfirmasi jadwal wawancara saya. Boleh minta info tempat wawancaranya?"
+                        )
                       )}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -362,7 +401,19 @@ export const InterviewSchedulePicker: React.FC<InterviewSchedulePickerProps> = (
               {!booking && (
                 <a
                   href={ADMIN_WA_CONFIG.getUrl(
-                    "Halo kak Nia, saya belum sempat memilih jadwal wawancara OPREC Robotika UNS sebelum batas waktunya. Apakah masih bisa dibantu?"
+                    [
+                      "Halo kak Nia, perkenalkan saya calon anggota OPREC Robotika UNS.",
+                      ...[
+                        applicant?.name ? `Nama: ${applicant.name}` : null,
+                        applicant?.nim ? `NIM: ${applicant.nim}` : null,
+                        [applicant?.fakultas, applicant?.prodi].filter(Boolean).length
+                          ? `Fakultas/Prodi: ${[applicant?.fakultas, applicant?.prodi].filter(Boolean).join(" / ")}`
+                          : null,
+                      ].filter(Boolean),
+                      "",
+                      "Saya belum sempat memilih jadwal wawancara sebelum batas waktunya. Apakah masih bisa dibantu?",
+                      "Terima kasih, kak.",
+                    ].join("\n")
                   )}
                   target="_blank"
                   rel="noopener noreferrer"

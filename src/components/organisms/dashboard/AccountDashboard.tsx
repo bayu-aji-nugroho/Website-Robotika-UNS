@@ -338,7 +338,16 @@ const RegistrationDetails: React.FC<{
         </div>
       </div>
 
-      {isSubmitted && <InterviewSchedulePicker />}
+      {isSubmitted && (
+        <InterviewSchedulePicker
+          applicant={{
+            name: record.full_name || user.fullName,
+            nim: record.nim,
+            fakultas: resolveFacultyName(record.fakultas, record.prodi) || record.fakultas,
+            prodi: record.prodi,
+          }}
+        />
+      )}
 
       {isSubmitted && (
         <div className="flex justify-end">

@@ -69,7 +69,14 @@ export const RegistrationSuccessSection: React.FC<RegistrationSuccessSectionProp
       </div>
 
       {/* 2. Pemilihan Jadwal Wawancara */}
-      <InterviewSchedulePicker />
+      <InterviewSchedulePicker
+        applicant={{
+          name: data.fullName,
+          nim: data.nim,
+          fakultas: detectedFaculty !== "-" ? detectedFaculty : null,
+          prodi: data.prodi,
+        }}
+      />
 
       {/* 3. Kartu Dokumen Tanda Terima Resmi (Berada di Bawah Link WA) */}
       <div className="bg-white dark:bg-[#16171a] rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm print:border-none print:shadow-none print:p-0 overflow-hidden transition-colors">
