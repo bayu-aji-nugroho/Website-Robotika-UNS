@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ OprecOpenBanner.tsx ]
-fungsi [ Notifikasi (warna diatur admin, bawaan hijau) yang meluncur dari bawah navbar saat Open Recruitment sedang dibuka (mengikuti status OPREC efektif, termasuk jadwal buka/tutup otomatis), dengan tombol daftar dan tombol tutup ]
+fungsi [ Notifikasi (teks = Label Pengumuman & warna diatur admin, bawaan hijau) yang meluncur dari bawah navbar saat Open Recruitment sedang dibuka (mengikuti status OPREC efektif, termasuk jadwal buka/tutup otomatis), dengan tombol daftar dan tombol tutup ]
 -----------------------------------------------
 */
 
@@ -11,10 +11,17 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
-import { getAdminSettings, getOprecBannerColors, isOprecOpenNow } from "@/src/services";
+import { DEFAULT_ADMIN_SETTINGS, getAdminSettings, getOprecBannerColors, isOprecOpenNow } from "@/src/services";
 
 // Notifikasi yang sudah ditutup tidak muncul lagi selama tab browser masih terbuka
 const DISMISS_KEY = "oprec_open_banner_dismissed";
+const DEFAULT_BANNER_TEXT = "Open Recruitment dibuka, silakan daftar!";
+
+/** Teks notifikasi = Label Pengumuman dari admin; kosong/bawaan = teks standar */
+function bannerTextFrom(label: string | null | undefined): string {
+  const trimmed = (label || "").trim();
+  return trimmed && trimmed !== DEFAULT_ADMIN_SETTINGS.label ? trimmed : DEFAULT_BANNER_TEXT;
+}
 
 function readDismissed(): boolean {
   try {
@@ -33,12 +40,14 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
   const [visible, setVisible] = useState(false);
   // Warna diatur admin di Pengaturan OPREC; teks putih/hitam menyesuaikan kontras
   const [colors, setColors] = useState(() => getOprecBannerColors(null));
+  const [text, setText] = useState(DEFAULT_BANNER_TEXT);
 
   useEffect(() => {
     let isMounted = true;
     getAdminSettings().then((settings) => {
       if (isMounted && isOprecOpenNow(settings, Date.now()) && !readDismissed()) {
         setColors(getOprecBannerColors(settings.oprec_banner_color));
+        setText(bannerTextFrom(settings.label));
         setVisible(true);
       }
     });
@@ -73,8 +82,8 @@ export const OprecOpenBanner: React.FC<OprecOpenBannerProps> = ({ hidden = false
               boxShadow: `0 10px 15px -3px ${colors.background}4d`,
             }}
           >
-            <span className="text-xs sm:text-sm font-semibold truncate">
-              Open Recruitment dibuka, silakan daftar!
+            <span className="text-xs sm:text-sm font-semibold truncate" title={text}>
+              {text}
             </span>
             <Link
               href="/register"
