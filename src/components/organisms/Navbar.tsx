@@ -12,11 +12,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container, ThemeToggle } from "../atoms";
 import { NavBrand, NavLinks, NavNotificationBell, NavUserMenu } from "../molecules";
-import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, LogIn } from "lucide-react";
 import { OprecOpenBanner } from "./OprecOpenBanner";
 import {
   GoogleAuthUser,
   getAuthenticatedUser,
+  signInWithGoogle,
   signOutUser,
   supabase,
   formatSupabaseUser,
@@ -26,6 +27,9 @@ export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<GoogleAuthUser | null>(null);
+  // Tombol Masuk baru tampil setelah status login diketahui (tidak berkedip)
+  const [authReady, setAuthReady] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,7 +44,10 @@ export const Navbar: React.FC = () => {
     let isMounted = true;
 
     getAuthenticatedUser().then((u) => {
-      if (isMounted) setUser(u);
+      if (isMounted) {
+        setUser(u);
+        setAuthReady(true);
+      }
     });
 
     const {
@@ -73,6 +80,15 @@ export const Navbar: React.FC = () => {
     setUser(null);
   };
 
+  // Saat pendaftaran ditutup hanya akun yang sudah mengirim pendaftaran yang diterima (dicek global)
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    const { error } = await signInWithGoogle("/dashboard");
+    if (error) setIsLoggingIn(false);
+  };
+
+  const showLogin = authReady && !user;
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#121316]/95 backdrop-blur-md transition-all duration-300 ease-out ${
@@ -104,6 +120,19 @@ export const Navbar: React.FC = () => {
               >
                 Daftar Sekarang
               </Link>
+
+              {showLogin && (
+                <button
+                  type="button"
+                  onClick={handleLogin}
+                  disabled={isLoggingIn}
+                  title="Masuk ke dashboard (khusus pendaftar yang sudah mengirim pendaftaran)"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60 transition-colors cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isLoggingIn ? "Menghubungkan..." : "Masuk"}</span>
+                </button>
+              )}
 
               {/* Lonceng notifikasi pengumuman dari admin */}
               {user && <NavNotificationBell key={user.id} />}
@@ -166,6 +195,18 @@ export const Navbar: React.FC = () => {
                   >
                     Daftar Sekarang
                   </Link>
+
+                  {showLogin && (
+                    <button
+                      type="button"
+                      onClick={handleLogin}
+                      disabled={isLoggingIn}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-[#18181b] dark:text-zinc-200 border border-[#e4e4e7] dark:border-zinc-800 rounded-md transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60 cursor-pointer"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>{isLoggingIn ? "Menghubungkan..." : "Masuk (Sudah Mendaftar)"}</span>
+                    </button>
+                  )}
 
                   {/* Opsi Dashboard Mobile jika sedang Login */}
                   {user && (

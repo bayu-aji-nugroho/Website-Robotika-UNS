@@ -119,24 +119,89 @@ async function rejectNonSsoSession(email: string) {
   notifySsoRejection();
 }
 
-if (typeof window !== "undefined") {
-  supabase.auth.getSession().then(async ({ data: { session } }) => {
-    const email = session?.user?.email;
-    if (session && !(await isApplicantAccessAllowed(email))) {
-      rejectNonSsoSession(email || "akun ini");
+// ---------------------------------------------------------------------------
+// Saat OPREC ditutup, hanya akun yang sudah mengirim pendaftaran (dokumen lengkap)
+// yang boleh login; akun draft / belum mendaftar langsung dikeluarkan.
+// Dicek di database lewat RPC am_i_login_allowed (otomatis bebas lagi saat OPREC dibuka).
+// ---------------------------------------------------------------------------
+const loginAllowedChecks = new Map<string, Promise<boolean>>();
+
+async function isLoginAllowedNow(userId: string): Promise<boolean> {
+  let check = loginAllowedChecks.get(userId);
+  if (!check) {
+    // Gagal dicek (mis. koneksi): jangan keluarkan pengguna; data tetap dijaga database
+    check = Promise.resolve(supabase.rpc("am_i_login_allowed")).then(({ data, error }) => error ? true : data !== false);
+    loginAllowedChecks.set(userId, check);
+  }
+  return check;
+}
+
+const CLOSED_REJECTED_KEY = "robotika_uns_closed_rejected_email";
+let closedRejectedEmail: string | null = null;
+const closedRejectionListeners = new Set<() => void>();
+
+/** Email yang ditolak karena pendaftaran sudah ditutup dan belum lengkap, atau null. */
+export function getClosedRejectedEmail(): string | null {
+  if (closedRejectedEmail === null && typeof window !== "undefined") {
+    try {
+      closedRejectedEmail = sessionStorage.getItem(CLOSED_REJECTED_KEY);
+    } catch {
+      // sessionStorage tidak tersedia
     }
+  }
+  return closedRejectedEmail;
+}
+
+export function subscribeClosedRejection(listener: () => void): () => void {
+  closedRejectionListeners.add(listener);
+  return () => closedRejectionListeners.delete(listener);
+}
+
+export function clearClosedRejection() {
+  closedRejectedEmail = null;
+  try {
+    sessionStorage.removeItem(CLOSED_REJECTED_KEY);
+  } catch {
+    // abaikan
+  }
+  closedRejectionListeners.forEach((listener) => listener());
+}
+
+async function rejectClosedSession(email: string) {
+  closedRejectedEmail = email;
+  try {
+    sessionStorage.setItem(CLOSED_REJECTED_KEY, email);
+  } catch {
+    // abaikan
+  }
+  await supabase.auth.signOut({ scope: "local" });
+  window.dispatchEvent(new Event("supabase-auth-signout"));
+  closedRejectionListeners.forEach((listener) => listener());
+}
+
+/** Gerbang login pendaftar: email SSO/whitelist, lalu status pendaftaran saat OPREC ditutup. */
+async function enforceApplicantLogin(user: User, isNewSignIn: boolean) {
+  const email = user.email;
+  if (!(await isApplicantAccessAllowed(email))) {
+    rejectNonSsoSession(email || "akun ini");
+    return;
+  }
+  if (isNewSignIn && getSsoRejectedEmail()) clearSsoRejection();
+  if (!(await isLoginAllowedNow(user.id))) {
+    rejectClosedSession(email || "akun ini");
+  } else if (isNewSignIn && getClosedRejectedEmail()) {
+    clearClosedRejection();
+  }
+}
+
+if (typeof window !== "undefined") {
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) enforceApplicantLogin(session.user, false);
   });
   supabase.auth.onAuthStateChange((event, session) => {
     if (event !== "SIGNED_IN" || !session) return;
-    const email = session.user.email;
     // Ditunda agar tidak memanggil RPC/signOut di dalam callback auth itu sendiri
-    setTimeout(async () => {
-      if (!(await isApplicantAccessAllowed(email))) {
-        rejectNonSsoSession(email || "akun ini");
-      } else if (getSsoRejectedEmail()) {
-        clearSsoRejection();
-      }
-    }, 0);
+    setTimeout(() => enforceApplicantLogin(session.user, true), 0);
   });
 }
 
