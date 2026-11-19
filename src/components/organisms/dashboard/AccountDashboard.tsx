@@ -25,6 +25,7 @@ import { Skeleton } from "@/src/components/atoms";
 import { NonSsoLoginOption } from "@/src/components/molecules";
 import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 import { WhatsAppGroupCard } from "@/src/components/organisms/dashboard/WhatsAppGroupCard";
+import { EventTicketsCard } from "@/src/components/organisms/dashboard/EventTicketsCard";
 import {
   DivisionSelectionCategory,
   GoogleAuthUser,
@@ -260,6 +261,9 @@ const RegistrationDetails: React.FC<{
           </div>
         )}
       </div>
+
+      {/* Tiket QR presensi acara divisi (hanya tampil bila ada tiket) */}
+      {isSubmitted && <EventTicketsCard />}
 
       {/* Pengingat gabung grup WhatsApp (banyak yang lupa setelah submit) */}
       {isSubmitted && <WhatsAppGroupCard />}
