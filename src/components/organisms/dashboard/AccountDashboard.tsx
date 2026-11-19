@@ -262,8 +262,8 @@ const RegistrationDetails: React.FC<{
         )}
       </div>
 
-      {/* Tiket QR presensi acara divisi (hanya tampil bila ada tiket) */}
-      {isSubmitted && <EventTicketsCard />}
+      {/* QR presensi pribadi (satu untuk semua acara) + daftar acara divisi */}
+      {isSubmitted && <EventTicketsCard name={record.full_name || user.fullName} nim={record.nim} />}
 
       {/* Pengingat gabung grup WhatsApp (banyak yang lupa setelah submit) */}
       {isSubmitted && <WhatsAppGroupCard />}
