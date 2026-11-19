@@ -9,7 +9,7 @@ fungsi [ Kartu QR presensi di Dashboard Akun: satu QR tetap milik peserta (dipin
 
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { CalendarCheck, CheckCircle2, MapPin, QrCode } from "lucide-react";
+import { CalendarCheck, CheckCircle2, MapPin, QrCode, X } from "lucide-react";
 import { supabase } from "@/src/services";
 
 interface EventTicket {
@@ -40,6 +40,26 @@ const formatWib = (value: string) =>
 export const EventTicketsCard: React.FC<{ name?: string | null; nim?: string | null }> = ({ name, nim }) => {
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [tickets, setTickets] = useState<EventTicket[]>([]);
+  const [showQr, setShowQr] = useState(false);
+
+  // Layar penuh: tutup dengan Esc, cegah layar redup/mati selama QR ditampilkan
+  useEffect(() => {
+    if (!showQr) return;
+    let wakeLock: { release: () => Promise<void> } | null = null;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
+    nav.wakeLock?.request("screen").then((lock) => (wakeLock = lock)).catch(() => {});
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowQr(false);
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      void wakeLock?.release().catch(() => {});
+    };
+  }, [showQr]);
 
   useEffect(() => {
     let active = true;
@@ -71,32 +91,56 @@ export const EventTicketsCard: React.FC<{ name?: string | null; nim?: string | n
         <div className="space-y-0.5">
           <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">QR Presensi</p>
           <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-            Satu QR ini dipakai untuk semua acara. Tunjukkan ke panitia saat datang, naikkan kecerahan layar, dan
-            siapkan KTM. Simpan screenshot bila sinyal di lokasi kurang bagus.
+            Satu QR untuk semua acara. Saat presensi, tekan tombol QR lalu tunjukkan layar ke panitia dan siapkan
+            KTM. Simpan screenshot bila sinyal di lokasi kurang bagus.
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
-        {/* Latar putih tetap di mode gelap agar QR mudah dipindai */}
-        <div className="p-3 rounded-lg bg-white border border-zinc-200">
+      <button
+        type="button"
+        onClick={() => setShowQr(true)}
+        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#B22234] hover:bg-[#8B0000] text-white text-sm font-bold rounded-lg transition-colors shadow-xs cursor-pointer min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#B22234] focus-visible:ring-offset-2 focus-visible:outline-hidden"
+      >
+        <QrCode className="w-5 h-5" />
+        <span>QR</span>
+      </button>
+
+      {showQr && (
+        // Layar penuh putih agar QR terang & mudah dipindai (kecerahan layar tidak bisa diatur dari web)
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR presensi"
+          onClick={() => setShowQr(false)}
+          className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center gap-4 p-4 text-zinc-900"
+        >
+          <button
+            type="button"
+            onClick={() => setShowQr(false)}
+            aria-label="Tutup QR"
+            className="absolute top-4 right-4 p-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 cursor-pointer"
+          >
+            <X className="w-6 h-6" />
+          </button>
           <QRCodeSVG
             value={qrToken}
-            size={220}
             bgColor="#FFFFFF"
-            fgColor="#18181b"
+            fgColor="#000000"
             level="M"
             marginSize={2}
             title="QR presensi"
+            style={{ width: "min(88vw, 70vh)", height: "min(88vw, 70vh)" }}
           />
+          {(name || nim) && (
+            <p className="text-center">
+              <span className="block text-lg font-bold">{name}</span>
+              {nim && <span className="block font-mono text-base">{nim}</span>}
+            </p>
+          )}
+          <p className="text-xs text-zinc-500">Naikkan kecerahan layar bila sulit terbaca · ketuk untuk menutup</p>
         </div>
-        {(name || nim) && (
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 text-center">
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{name}</span>
-            {nim && <span className="font-mono"> · {nim}</span>}
-          </p>
-        )}
-      </div>
+      )}
 
       <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
