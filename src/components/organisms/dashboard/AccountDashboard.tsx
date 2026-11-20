@@ -26,7 +26,6 @@ import { NonSsoLoginOption } from "@/src/components/molecules";
 import { InterviewSchedulePicker } from "@/src/components/organisms/interview/InterviewSchedulePicker";
 import { WhatsAppGroupCard } from "@/src/components/organisms/dashboard/WhatsAppGroupCard";
 import { EventTicketsCard } from "@/src/components/organisms/dashboard/EventTicketsCard";
-import { InternshipScheduleCard } from "@/src/components/organisms/dashboard/InternshipScheduleCard";
 import { MeetingHistoryCard } from "@/src/components/organisms/dashboard/MeetingHistoryCard";
 import {
   DivisionSelectionCategory,
@@ -270,10 +269,7 @@ const RegistrationDetails: React.FC<{
       {/* QR presensi pribadi (satu untuk semua acara) + daftar acara divisi */}
       {isSubmitted && <EventTicketsCard name={record.full_name || user.fullName} nim={record.nim} />}
 
-      {/* Jadwal magang divisi Pilihan 1 */}
-      {isSubmitted && <InternshipScheduleCard divisionName={record.primary_division_name} />}
-
-      {/* Riwayat pertemuan (acara & magang yang sudah lewat) */}
+      {/* Riwayat pertemuan (acara yang sudah lewat) */}
       {isSubmitted && <MeetingHistoryCard name={record.full_name || user.fullName} nim={record.nim} />}
         </div>
 

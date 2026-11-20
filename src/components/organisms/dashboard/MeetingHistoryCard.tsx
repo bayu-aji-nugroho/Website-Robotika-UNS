@@ -1,7 +1,7 @@
 /*
 -----------------------------------------
 nama file: [ MeetingHistoryCard.tsx ]
-fungsi [ Kartu riwayat pertemuan di Dashboard Akun: acara divisi & magang yang sudah berlangsung beserta status kehadirannya, plus kontak panitia bila ada kejanggalan ]
+fungsi [ Kartu riwayat pertemuan di Dashboard Akun: acara divisi yang sudah berlangsung beserta status kehadirannya, plus kontak panitia bila ada kejanggalan ]
 -----------------------------------------------
 */
 
@@ -12,7 +12,6 @@ import { History, MessageCircle } from "lucide-react";
 import { supabase } from "@/src/services";
 
 interface Meeting {
-  kind: "acara" | "magang";
   title: string;
   at: string;
   location: string | null;
@@ -68,7 +67,7 @@ export const MeetingHistoryCard: React.FC<{ name?: string | null; nim?: string |
           <History className="w-5 h-5 text-[#B22234] mt-0.5 shrink-0" />
           <div className="space-y-0.5">
             <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Riwayat Pertemuan</p>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">Acara divisi & magang yang sudah berlangsung.</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">Acara divisi yang sudah berlangsung.</p>
           </div>
         </div>
         {history.meetings.length > 0 && (
@@ -84,13 +83,12 @@ export const MeetingHistoryCard: React.FC<{ name?: string | null; nim?: string |
         <ul className="space-y-2">
           {history.meetings.map((m, i) => (
             <li
-              key={`${m.kind}-${m.at}-${i}`}
+              key={`${m.at}-${i}`}
               className="flex flex-wrap items-start justify-between gap-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs"
             >
               <div className="min-w-0 space-y-0.5">
                 <p className="font-semibold text-zinc-900 dark:text-zinc-100 break-words">
                   {m.title}
-                  <span className="font-normal text-zinc-500 dark:text-zinc-400"> · {m.kind === "magang" ? "Magang" : "Acara"}</span>
                 </p>
                 <p className="text-zinc-600 dark:text-zinc-400">
                   {formatWib(m.at)}
