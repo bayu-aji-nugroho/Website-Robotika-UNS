@@ -27,6 +27,7 @@ import { InterviewSchedulePicker } from "@/src/components/organisms/interview/In
 import { WhatsAppGroupCard } from "@/src/components/organisms/dashboard/WhatsAppGroupCard";
 import { EventTicketsCard } from "@/src/components/organisms/dashboard/EventTicketsCard";
 import { InternshipScheduleCard } from "@/src/components/organisms/dashboard/InternshipScheduleCard";
+import { MeetingHistoryCard } from "@/src/components/organisms/dashboard/MeetingHistoryCard";
 import {
   DivisionSelectionCategory,
   GoogleAuthUser,
@@ -263,11 +264,20 @@ const RegistrationDetails: React.FC<{
         )}
       </div>
 
+      {/* Laptop: 2 kolom (presensi & jadwal | data & wawancara); HP: urutan tetap bertumpuk */}
+      <div className={isSubmitted ? "grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start" : ""}>
+        <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* QR presensi pribadi (satu untuk semua acara) + daftar acara divisi */}
       {isSubmitted && <EventTicketsCard name={record.full_name || user.fullName} nim={record.nim} />}
 
       {/* Jadwal magang divisi Pilihan 1 */}
       {isSubmitted && <InternshipScheduleCard divisionName={record.primary_division_name} />}
+
+      {/* Riwayat pertemuan (acara & magang yang sudah lewat) */}
+      {isSubmitted && <MeetingHistoryCard name={record.full_name || user.fullName} nim={record.nim} />}
+        </div>
+
+        <div className="space-y-3 sm:space-y-4 min-w-0">
 
       {/* Pengingat gabung grup WhatsApp (banyak yang lupa setelah submit) */}
       {isSubmitted && <WhatsAppGroupCard />}
@@ -365,6 +375,8 @@ const RegistrationDetails: React.FC<{
           </Link>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

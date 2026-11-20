@@ -87,7 +87,7 @@ export const DashboardTemplate: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#F9F9F8] dark:bg-[#121316] text-[#18181b] dark:text-[#f4f4f5] transition-colors duration-200">
       <main className="flex-1 py-4 sm:py-8 lg:py-12">
         <Container size="lg">
-          <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
+          <div className="max-w-3xl lg:max-w-6xl mx-auto space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <Link
                 href="/"
